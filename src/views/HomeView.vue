@@ -10,6 +10,8 @@
 
     components: {
       HelloWorld,
+
+
     },
   }
 </script>

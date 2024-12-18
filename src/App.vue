@@ -1,56 +1,73 @@
 <template>
-
   <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
-
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
-
-      <v-spacer></v-spacer>
-
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
+    <!-- Barre de navigation avec le menu burger -->
+    <NavBar :titles="navLinks" />
 
     <v-main>
-      <router-view/>
+      <router-view />
     </v-main>
   </v-app>
 </template>
 
 <script>
+import NavBar from './components/NavBar.vue';
 
 export default {
   name: 'App',
-
-  data: () => ({
-    //
-  }),
+  components: {
+    NavBar,
+  },
+  data() {
+    return {
+      isLoggedIn: false, // État de l'authentification de l'utilisateur
+      navLinks: [
+        { text: 'Home', to: '/', icon: 'mdi-home' },
+        { text: 'Login', to: { name: 'shoplogin' }, icon: 'mdi-login' },
+        { text: 'Compte Bancaire', to: { name: 'bankaccount' }, icon: 'mdi-bank' },
+      ],
+    };
+  },
+  methods: {
+    login() {
+      this.isLoggedIn = true;
+      this.updateNavLinks();
+    },
+    logout() {
+      this.isLoggedIn = false;
+      this.updateNavLinks();
+      this.$router.push({ name: 'home' });
+    },
+    updateNavLinks() {
+      this.navLinks = this.isLoggedIn
+          ? [
+            { text: 'Home', to: '/', icon: 'mdi-home' },
+            { text: 'Logout', action: 'logout', icon: 'mdi-logout' },
+            { text: 'Virus', to: { name: 'shopitems' }, icon: 'mdi-virus' },
+            { text: 'Acheter', to: '/shop', icon: 'mdi-cart' },
+            { text: 'Payer', to: '/pay', icon: 'mdi-credit-card' },
+            { text: 'Mes commandes', to: '/orders', icon: 'mdi-clipboard-list' },
+          ]
+          : [
+            { text: 'Home', to: '/', icon: 'mdi-home' },
+            { text: 'Login', to: { name: 'shoplogin' }, icon: 'mdi-login' },
+            { text: 'Compte Bancaire', to: { name: 'bankaccount' }, icon: 'mdi-bank' },
+          ];
+    },
+  },
+  created() {
+    this.updateNavLinks();
+  },
 };
 </script>
+
+<style scoped>
+.path-bar {
+  padding: 10px 0;
+}
+
+.path-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+</style>
