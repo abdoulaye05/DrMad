@@ -6,7 +6,7 @@
         <v-form>
           <v-text-field
               v-model="login"
-              label="abdou le go"
+              label="arthur le goat"
               outlined
               dense
           ></v-text-field>
