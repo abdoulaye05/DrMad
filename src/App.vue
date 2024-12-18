@@ -60,14 +60,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.path-bar {
-  padding: 10px 0;
-}
-
-.path-text {
-  font-size: 16px;
-  font-weight: bold;
-  color: #2c3e50;
-}
-</style>
