@@ -1,54 +1,134 @@
 <template>
-  <div>
-    <h1>Account data</h1>
+  <v-container fluid>
+    <v-card class="mx-auto pa-4" max-width="600" elevation="4">
+      <!-- Titre -->
+      <v-card-title class="headline">Account Data</v-card-title>
+      <v-card-text>
+        <!-- Champ de saisie pour le numéro de compte -->
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+                v-model="number"
+                label="Account Number"
+                outlined
+                dense
+                clearable
+                @click:clear="resetAccountNumber"
+                :error="accountNumberError === -1"
+                :error-messages="accountNumberError === -1 ? 'Invalid account number' : ''"
+            ></v-text-field>
+          </v-col>
+        </v-row>
 
-    <span>account number</span><input v-model="number"><button @click="resetAccountNumber">Reset</button>
-    <br />
-    <button :disabled="!isAccountNumberValid" @click="getAccountAmount(number)">Get amount</button><button :disabled="!isAccountNumberValid" @click="getAccountTransactions(number)">Get transactions</button>
-    <p v-if="accountNumberError===-1">invalid account number</p>
-    <hr />
-    <span>available amount : </span>
-    <span v-if="accountNumberError === 1" >{{accountAmount}}</span>
-    <span v-else></span>
-    <hr />
-    <p>passed transactions:</p>
-    <div v-if="accountNumberError === 1">
-      <ul>
-        <li v-for="(trans,index) in accountTransactions" :key="index">{{trans.amount}} the {{convertDate(trans.date.$date)}}</li>
-      </ul>
-    </div>
-    <span v-else></span>
+        <!-- Boutons GET AMOUNT et GET TRANSACTIONS -->
+        <v-row>
+          <v-col cols="6">
+            <v-btn
+                :style="{ backgroundColor: '#7B241C', color: 'white' }"
+                :disabled="!isAccountNumberValid"
+                @click="getAccountAmount(number)"
+                block
+            >
+              GET AMOUNT
+            </v-btn>
+          </v-col>
+          <v-col cols="6">
+            <v-btn
+                :style="{ backgroundColor: '#FFFFFF', color: '#000000', border: '1px solid #7B241C' }"
+                :disabled="!isAccountNumberValid"
+                @click="getAccountTransactions(number)"
+                block
+            >
+              GET TRANSACTIONS
+            </v-btn>
+          </v-col>
+        </v-row>
 
-  </div>
+        <!-- Résultat du montant disponible -->
+        <v-divider></v-divider>
+        <v-row v-if="accountNumberError === 1" class="mt-4">
+          <v-col cols="12" class="text-center">
+            <h3>Available Amount:</h3>
+            <v-chip color="green" outlined>{{ accountAmount }} €</v-chip>
+          </v-col>
+        </v-row>
 
+        <!-- Transactions passées -->
+        <v-divider class="mt-4"></v-divider>
+        <v-row v-if="accountNumberError === 1" class="mt-4">
+          <v-col cols="12">
+            <h3>Passed Transactions:</h3>
+            <v-list dense>
+              <v-list-item
+                  v-for="(trans, index) in accountTransactions"
+                  :key="index"
+              >
+                <v-list-item-content>
+                  <v-list-item-title>
+                    {{ trans.amount }} € on
+                    {{ convertDate(trans.date.$date) }}
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <!-- Bouton Reset -->
+      <v-card-actions>
+        <v-btn text color="grey" @click="resetAccountNumber">RESET</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
+import { mapState, mapActions, mapMutations } from "vuex";
 
-import {mapState, mapActions, mapMutations} from 'vuex'
 export default {
-  name: 'BankAccountView',
+  name: "BankAccountView",
   data: () => ({
-    number: '',
+    number: "",
   }),
   computed: {
-    ...mapState(['accountAmount', 'accountTransactions','accountNumberError']),
+    ...mapState(["accountAmount", "accountTransactions", "accountNumberError"]),
     isAccountNumberValid() {
-      const rexp = RegExp('^[A-Za-z0-9]{22}-[0-9]{7}$','g')
-      return rexp.test(this.number)
-    }
+      const rexp = RegExp("^[A-Za-z0-9]{22}-[0-9]{7}$", "g");
+      return rexp.test(this.number);
+    },
   },
   methods: {
-    ...mapActions(['getAccountAmount','getAccountTransactions']),
-    ...mapMutations(['updateAccountNumberError']),
+    ...mapActions(["getAccountAmount", "getAccountTransactions"]),
+    ...mapMutations(["updateAccountNumberError"]),
     convertDate(date) {
-      let d = new Date(date)
-      return d.getMonth()+"/"+d.getDate()+"/"+d.getFullYear()+" the "+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()
+      let d = new Date(date);
+      return (
+          d.getMonth() +
+          1 +
+          "/" +
+          d.getDate() +
+          "/" +
+          d.getFullYear() +
+          " at " +
+          d.getHours() +
+          ":" +
+          d.getMinutes() +
+          ":" +
+          d.getSeconds()
+      );
     },
     resetAccountNumber() {
-      this.number = ''
-      this.updateAccountNumberError(0)
-    }
-  }
-}
+      this.number = "";
+      this.updateAccountNumberError(0);
+    },
+  },
+};
 </script>
+
+<!--<style scoped>
+/*.v-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}*/
+</style>-->
