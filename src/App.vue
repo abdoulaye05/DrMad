@@ -19,7 +19,7 @@ export default {
   },
   data() {
     return {
-      isLoggedIn: false, // État de l'authentification de l'utilisateur
+      isLoggedIn: false, // État de l'authentification  l'utilisateur
       navLinks: [],
     };
   },
