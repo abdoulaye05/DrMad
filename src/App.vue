@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- Barre de navigation avec le menu burger -->
-    <NavBar :titles="navLinks" />
+    <NavBar :titles="navLinks" @menu-clicked="handleMenuClicked" />
 
     <v-main>
       <router-view />
@@ -20,14 +20,15 @@ export default {
   data() {
     return {
       isLoggedIn: false, // État de l'authentification de l'utilisateur
-      navLinks: [
-        { text: 'Home', to: '/', icon: 'mdi-home' },
-        { text: 'Login', to: { name: 'shoplogin' }, icon: 'mdi-login' },
-        { text: 'Compte Bancaire', to: { name: 'bankaccount' }, icon: 'mdi-bank' },
-      ],
+      navLinks: [],
     };
   },
   methods: {
+    handleMenuClicked(action) {
+      if (action === 'logout') {
+        this.logout();
+      }
+    },
     login() {
       this.isLoggedIn = true;
       this.updateNavLinks();
@@ -35,7 +36,7 @@ export default {
     logout() {
       this.isLoggedIn = false;
       this.updateNavLinks();
-      this.$router.push({ name: 'home' });
+      this.$router.push({ name: 'shoplogin' }); // Redirection vers la page Login
     },
     updateNavLinks() {
       this.navLinks = this.isLoggedIn
@@ -59,4 +60,3 @@ export default {
   },
 };
 </script>
-

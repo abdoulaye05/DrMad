@@ -59,14 +59,10 @@
           <v-col cols="12">
             <h3>Passed Transactions:</h3>
             <v-list dense>
-              <v-list-item
-                  v-for="(trans, index) in accountTransactions"
-                  :key="index"
-              >
+              <v-list-item v-for="(trans, index) in accountTransactions" :key="index">
                 <v-list-item-content>
                   <v-list-item-title>
-                    {{ trans.amount }} € on
-                    {{ convertDate(trans.date.$date) }}
+                    {{ trans.amount }} € on {{ convertDate(trans.date.$date) }}
                   </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
@@ -92,15 +88,15 @@ export default {
     number: "",
   }),
   computed: {
-    ...mapState(["accountAmount", "accountTransactions", "accountNumberError"]),
+    ...mapState("bank", ["accountAmount", "accountTransactions", "accountNumberError"]),
     isAccountNumberValid() {
       const rexp = RegExp("^[A-Za-z0-9]{22}-[0-9]{7}$", "g");
       return rexp.test(this.number);
     },
   },
   methods: {
-    ...mapActions(["getAccountAmount", "getAccountTransactions"]),
-    ...mapMutations(["updateAccountNumberError"]),
+    ...mapActions("bank", ["getAccountAmount", "getAccountTransactions"]),
+    ...mapMutations("bank", ["updateAccountNumberError"]),
     convertDate(date) {
       let d = new Date(date);
       return (
@@ -125,10 +121,3 @@ export default {
   },
 };
 </script>
-
-<!--<style scoped>
-/*.v-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}*/
-</style>-->
