@@ -13,8 +13,6 @@ function shopLogin(data) {
     return { error: 1, status: 404, data: 'Login/pass incorrect' };
   }
 
-  console.log('user', user);
-
   // Vérification du mot de passe avec bcrypt.compareSync
   const isPasswordValid = bcrypt.compareSync(data.password, user.password);
   if (!isPasswordValid) {
@@ -34,13 +32,6 @@ function shopLogin(data) {
     email: user.email,
     session: user.session,
   };
-
-  console.log('u', u);
-
-/*  // Redirection vers la route /shop/buy
-  if (navigate) {
-    navigate('/shop/buy');
-  }*/
 
   return { error: 0, status: 200, data: u };
 }
