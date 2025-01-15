@@ -59,7 +59,7 @@ export default {
     ...mapState(["shopUser"]), // Utilisateur connecté
   },
   methods: {
-    ...mapActions('shop', ["s2hopLogin"]), // Action Vuex pour la connexion
+    ...mapActions('shop', ["shopLogin"]), // Action Vuex pour la connexion
     async handleLogin() {
       this.loginError = null; // Réinitialisation de l'erreur
       console.log('Tentative de connexion avec', this.login, this.password);
