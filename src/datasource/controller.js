@@ -7,16 +7,27 @@ function shopLogin(data) {
     return { error: 1, status: 404, data: 'Aucun login/pass fourni' };
   }
 
+  // Recherche d'un utilisateur par login
   let user = shopusers.find(e => e.login === data.login);
-  if (!user || !bcrypt.compareSync(data.password, user.password)) {
+  if (!user) {
     return { error: 1, status: 404, data: 'Login/pass incorrect' };
   }
 
+  console.log('user', user);
+
+  // Vérification du mot de passe avec bcrypt.compareSync
+  const isPasswordValid = bcrypt.compareSync(data.password, user.password);
+  if (!isPasswordValid) {
+    return { error: 1, status: 404, data: 'Login/pass incorrect' };
+  }
+
+  // Création de la session si elle n'existe pas encore
   if (!user.session) {
     user.session = uuidv4();
   }
 
-  let u = {
+  // Construction de l'objet utilisateur
+  const u = {
     _id: user._id,
     name: user.name,
     login: user.login,
@@ -24,8 +35,16 @@ function shopLogin(data) {
     session: user.session,
   };
 
+  console.log('u', u);
+
+/*  // Redirection vers la route /shop/buy
+  if (navigate) {
+    navigate('/shop/buy');
+  }*/
+
   return { error: 0, status: 200, data: u };
 }
+
 
 function getAllViruses() {
   return { error: 0, data: items };
