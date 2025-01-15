@@ -19,7 +19,7 @@ const routes = [
       {
         path: 'home',
         components: () => import('../views/ShopHome.vue'),
-        alias: ''
+        alias: '/shop'
       },
       {
         path: 'login',
