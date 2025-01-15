@@ -23,25 +23,25 @@ const routes = [
     children: [
       {
         path: 'home',
-        components: ShopHome,
+        component: ShopHome,
         alias: ''
       },
       {
         path: 'login',
-        components: ShopLogin
+        component: ShopLogin
       },
       {
         path: 'buy',
-        components: ShopBuy
+        component: ShopBuy
       },
       {
         path: 'pay/:orderId',
-        components: ShopPay,
+        component: ShopPay,
         props: { shopmain: true }
       },
       {
         path: 'orders',
-        components: ShopOrders
+        component: ShopOrders
       }
     ]
   },
