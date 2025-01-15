@@ -24,7 +24,7 @@ const routes = [
       {
         path: 'home',
         components: ShopHome,
-        alias: '/shop'
+        alias: ''
       },
       {
         path: 'login',
