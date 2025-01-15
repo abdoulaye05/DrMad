@@ -23,6 +23,7 @@ const actions = {
         } else {
             console.log(response.data);
         }
+        return response;
     },
     async getAllViruses({ commit }) {
         console.log('récupération des viruses');
