@@ -3,6 +3,11 @@ import VueRouter from 'vue-router'
 import HomeView from "@/views/HomeView.vue";
 import ShopView from '@/views/ShopView.vue';
 import BankAccountView from "@/views/BankAccountView.vue";
+import ShopHome from "@/views/ShopHome.vue";
+import ShopLogin from "@/views/ShopLogin.vue";
+import ShopBuy from "@/views/ShopBuy.vue";
+import ShopPay from "@/views/ShopPay.vue";
+import ShopOrders from "@/views/ShopOrders.vue";
 
 Vue.use(VueRouter)
 
@@ -18,25 +23,25 @@ const routes = [
     children: [
       {
         path: 'home',
-        components: () => import('../views/ShopHome.vue'),
+        components: ShopHome,
         alias: '/shop'
       },
       {
         path: 'login',
-        components: () => import('../views/ShopLogin.vue')
+        components: ShopLogin
       },
       {
         path: 'buy',
-        components: () => import('../views/ShopBuy.vue')
+        components: ShopBuy
       },
       {
         path: 'pay/:orderId',
-        components: () => import('../views/ShopPay.vue'),
+        components: ShopPay,
         props: { shopmain: true }
       },
       {
         path: 'orders',
-        components: () => import('../views/ShopOrders.vue')
+        components: ShopOrders
       }
     ]
   },
@@ -47,7 +52,7 @@ const routes = [
       {
         path: '/bank/account',
         name: 'bankaccount',
-        component: () => import('../views/BankAccountView.vue')
+        component: BankAccountView
       },
     ]
 
