@@ -6,7 +6,7 @@
         <v-form>
           <v-text-field
               v-model="login"
-              label="semih taskin"
+              label="Login"
               outlined
               dense
           ></v-text-field>
@@ -21,19 +21,26 @@
               color="primary"
               block
               class="mt-4"
-              @click="shopLogin({ login, password })"
+              @click="handleLogin"
           >
             Login
           </v-btn>
         </v-form>
+        <v-alert
+            v-if="loginError"
+            type="error"
+            class="mt-3"
+        >
+          {{ loginError }}
+        </v-alert>
+        <v-alert
+            v-if="shopUser"
+            type="success"
+            class="mt-3"
+        >
+          Welcome, {{ shopUser.name || shopUser.login }}!
+        </v-alert>
       </v-card-text>
-      <v-alert
-          v-if="shopUser"
-          type="success"
-          class="mt-3"
-      >
-        Welcome, {{ shopUser.name || shopUser.login }}!
-      </v-alert>
     </v-card>
   </v-container>
 </template>
@@ -48,10 +55,16 @@ export default {
     password: "",
   }),
   computed: {
-    ...mapState(["shopUser"]),
+    ...mapState(["shopUser", "loginError"]),
   },
   methods: {
     ...mapActions(["shopLogin"]),
+    handleLogin() {
+      this.shopLogin({ login: this.login, password: this.password });
+      if (this.shopUser) {
+        this.$router.push("/shop/buy");
+      }
+    },
   },
 };
 </script>

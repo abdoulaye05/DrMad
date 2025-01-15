@@ -1,24 +1,28 @@
 <template>
-  <div>
-    <h1>Payer une commande</h1>
-    <form>
-      <label for="order-id">ID de la commande :</label>
-      <input id="order-id" type="text" placeholder="Entrez l'ID de la commande" />
-
-      <label for="transaction-id">ID de la transaction bancaire :</label>
-      <input id="transaction-id" type="text" placeholder="Entrez l'ID de la transaction" />
-
-      <button type="submit">Payer</button>
-    </form>
-  </div>
+  <v-container class="mt-5 d-flex justify-center">
+    <v-card class="elevation-12" max-width="500">
+      <v-card-title class="text-h5 text-center">Paiement de la Commande</v-card-title>
+      <v-card-text>
+        <p class="text-center">Vous êtes sur le point de payer la commande n° {{ orderId }}.</p>
+        <v-btn color="primary" block @click="payOrder">Payer Maintenant</v-btn>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
 export default {
   name: "ShopPay",
+  props: {
+    orderId: {
+      type: String,
+      required: true,
+    },
+  },
+  methods: {
+    payOrder() {
+      alert(`Paiement effectué pour la commande n° ${this.orderId}.`);
+    },
+  },
 };
 </script>
-
-<style scoped>
-/* Ajoutez des styles ici si nécessaire */
-</style>

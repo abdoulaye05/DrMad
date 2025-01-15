@@ -1,7 +1,12 @@
 <template>
   <div>
-    <h1>Boutique</h1>
+    <h1>Bienvenue à la boutique</h1>
     <router-view name="shopmain"></router-view>
   </div>
 </template>
-x
+
+<script>
+export default {
+  name: "ShopView",
+};
+</script>

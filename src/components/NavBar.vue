@@ -1,112 +1,86 @@
 <template>
   <v-app-bar app color="#7b241c" dark>
-    <!-- Menu burger à gauche -->
-    <v-btn icon @click="drawer = !drawer">
-      <v-icon>mdi-menu</v-icon>
-    </v-btn>
-
-    <!-- Titre ou espace pour le menu -->
-    <v-toolbar-title class="ml-2">Boutique</v-toolbar-title>
+    <!-- Titre principal -->
+    <v-toolbar-title class="ml-2">
+      <!-- Logo cliquable qui redirige vers Shop Home -->
+      <v-btn icon :to="{ path: '/shop/home' }" class="ml-3">
+        <v-img
+            src="@/assets/logo1.png"
+            alt="Logo"
+            max-height="80"
+            max-width="80"
+            class="logo"
+        />
+      </v-btn>
+    </v-toolbar-title>
 
     <v-spacer></v-spacer>
 
-    <!-- Logo à droite -->
-    <v-img
-        src="@/assets/logo.png"
-        alt="Logo"
-        max-height="40"
-        max-width="40"
-        contain
-    />
+    <!-- Boutons de navigation pour tous les utilisateurs -->
+    <v-btn text :to="{ name: 'bankaccount' }" exact>
+      <v-icon left>mdi-store</v-icon> Bank Account
+    </v-btn>
 
-    <!-- Drawer pour le menu burger -->
-    <v-navigation-drawer
-        v-model="drawer"
-        app
-        temporary
-        class="menu-drawer"
-        width="300"
-    >
-      <v-list dense>
-        <v-list-item-group>
-          <v-list-item
-              v-for="(link, index) in links"
-              :key="index"
-              :to="link.to"
-              @click="link.action === 'logout' ? $emit('menu-clicked', link.action) : drawer = false"
-          >
-            <v-list-item-icon>
-              <v-icon>{{ link.icon }}</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>{{ link.text }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
+    <!-- Boutons supplémentaires pour utilisateurs connectés -->
+    <template v-if="isLoggedIn">
+      <v-btn text :to="{ name: 'shopitems' }" exact>
+        <v-icon left>mdi-virus</v-icon> Virus
+      </v-btn>
+      <v-btn text :to="{ path: '/shop/buy' }" exact>
+        <v-icon left>mdi-cart</v-icon> Buy
+      </v-btn>
+      <v-btn text :to="{ path: '/shop/orders' }" exact>
+        <v-icon left>mdi-package-variant-closed</v-icon> Orders
+      </v-btn>
+      <v-btn text @click="logout">
+        <v-icon left>mdi-logout</v-icon> Logout
+      </v-btn>
+    </template>
 
+    <!-- Bouton Login pour utilisateurs non connectés -->
+    <v-btn v-else text :to="{ name: 'shoplogin' }" exact>
+      <v-icon left>mdi-login</v-icon> Login
+    </v-btn>
   </v-app-bar>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-
 export default {
   name: "NavBar",
   data() {
     return {
-      drawer: false,
+      isLoggedIn: false, // État de connexion de l'utilisateur
     };
   },
-  computed: {
-    ...mapGetters('user', ['isLogged']),
-    links() {
-      const links = [];
-
-      if (!this.isLogged) {
-        links.push({ text: 'Bank', icon: 'mdi-bank', to: { name: 'bankaccount' } });
-        links.push({ text: 'Login', icon: 'mdi-login', to: { name: 'shoplogin' } });
-      } else {
-        links.push({ text: 'Bank', icon: 'mdi-bank', to: { name: 'bankaccount' } });
-        links.push({ text: 'Home', icon: 'mdi-home', to: { name: 'home' } });
-        links.push({ text: 'Shop', icon: 'mdi-account', to: { name: 'shophome' } });
-        links.push({ text: 'Buy', icon: 'mdi-account', to: { name: 'shopbuy' } });
-        links.push({ text: 'Order', icon: 'mdi-account', to: { name: 'shoporders' } });
-        links.push({ text: 'Viruses', icon: 'mdi-virus', to: { name: 'shopitems' } });
-        links.push({ text: 'Logout', icon: 'mdi-logout', action: 'logout' });
-      }
-
-      return links;
+  methods: {
+    login() {
+      this.isLoggedIn = true;
+    },
+    logout() {
+      this.isLoggedIn = false;
+      this.$router.push({ name: "home" });
     },
   },
 };
 </script>
 
-
 <style scoped>
-.menu-drawer {
-  background-color: #2c3e50;
-  z-index: 2000;
-}
-
-.v-list-item {
-  transition: background-color 0.3s;
-  cursor: pointer;
-}
-
-.v-list-item:hover {
-  background-color: #34495e;
-}
-
-.v-list-item-title {
-  color: white;
+/*.v-btn {
+  margin-left: 10px;
   font-weight: bold;
+}*/
+
+/*.v-toolbar-title {
+  font-weight: bold;
+  font-size: 1.2rem;
+}*/
+
+/* Animation au survol du logo */
+.logo {
+  transition: transform 0.3s ease;
 }
 
-.v-list-item-icon {
-  color: white;
+.logo:hover {
+  transform: scale(1.1);
 }
-
-
 </style>
