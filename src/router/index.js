@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import HomeView from "@/views/HomeView.vue";
 import ShopView from '@/views/ShopView.vue';
 import BankAccountView from "@/views/BankAccountView.vue";
 import ShopHome from "@/views/ShopHome.vue";
@@ -8,6 +7,7 @@ import ShopLogin from "@/views/ShopLogin.vue";
 import ShopBuy from "@/views/ShopBuy.vue";
 import ShopPay from "@/views/ShopPay.vue";
 import ShopOrders from "@/views/ShopOrders.vue";
+import HomePage from "@/views/HomePage.vue";
 
 Vue.use(VueRouter)
 
@@ -15,7 +15,7 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomePage
   },
   {
     path: '/shop',
@@ -24,24 +24,29 @@ const routes = [
       {
         path: 'home',
         component: ShopHome,
+        name: 'shophome',
         alias: ''
       },
       {
         path: 'login',
-        component: ShopLogin
+        component: ShopLogin,
+        name: 'shoplogin'
       },
       {
         path: 'buy',
-        component: ShopBuy
+        component: ShopBuy,
+        name: 'shopbuy'
       },
       {
         path: 'pay/:orderId',
         component: ShopPay,
-        props: { shopmain: true }
+        props: { shopmain: true },
+        name: 'shoppay'
       },
       {
         path: 'orders',
-        component: ShopOrders
+        component: ShopOrders,
+        name: 'shoporders'
       }
     ]
   },

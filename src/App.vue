@@ -41,15 +41,15 @@ export default {
     updateNavLinks() {
       this.navLinks = this.isLoggedIn
           ? [
-            { text: 'Home', to: '/', icon: 'mdi-home' },
+            { text: 'Home', to: { name: 'shophome' }, icon: 'mdi-home' },
             { text: 'Logout', action: 'logout', icon: 'mdi-logout' },
             { text: 'Virus', to: { name: 'shopitems' }, icon: 'mdi-virus' },
-            { text: 'Acheter', to: '/shop', icon: 'mdi-cart' },
-            { text: 'Payer', to: '/pay', icon: 'mdi-credit-card' },
-            { text: 'Mes commandes', to: '/orders', icon: 'mdi-clipboard-list' },
+            { text: 'Acheter', to: { name: 'shopbuy' }, icon: 'mdi-cart' },
+            { text: 'Payer', to: { name: 'shoppay' }, icon: 'mdi-credit-card' },
+            { text: 'Mes commandes', to: { name: 'shoporders' }, icon: 'mdi-clipboard-list' },
           ]
           : [
-            { text: 'Home', to: '/', icon: 'mdi-home' },
+            { text: 'Home', to: { name: 'shophome' }, icon: 'mdi-home' },
             { text: 'Login', to: { name: 'shoplogin' }, icon: 'mdi-login' },
             { text: 'Compte Bancaire', to: { name: 'bankaccount' }, icon: 'mdi-bank' },
           ];

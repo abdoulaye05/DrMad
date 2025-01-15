@@ -3,7 +3,7 @@
     <!-- Titre principal -->
     <v-toolbar-title class="ml-2">
       <!-- Logo cliquable qui redirige vers Shop Home -->
-      <v-btn icon :to="{ path: '/shop/home' }" class="ml-3">
+      <v-btn icon :to="{ name: 'home', }" class="ml-3">
         <v-img
             src="@/assets/logo1.png"
             alt="Logo"
@@ -26,10 +26,10 @@
       <v-btn text :to="{ name: 'shopitems' }" exact>
         <v-icon left>mdi-virus</v-icon> Virus
       </v-btn>
-      <v-btn text :to="{ path: '/shop/buy' }" exact>
+      <v-btn text :to="{ name: 'shopbuy' }" exact>
         <v-icon left>mdi-cart</v-icon> Buy
       </v-btn>
-      <v-btn text :to="{ path: '/shop/orders' }" exact>
+      <v-btn text :to="{ name: 'shoporders' }" exact>
         <v-icon left>mdi-package-variant-closed</v-icon> Orders
       </v-btn>
       <v-btn text @click="logout">
@@ -47,35 +47,22 @@
 <script>
 export default {
   name: "NavBar",
-  data() {
-    return {
-      isLoggedIn: false, // État de connexion de l'utilisateur
-    };
+  props: {
+    isLoggedIn: {
+      type: Boolean,
+      required: true, // Passé comme prop depuis le parent
+    },
   },
   methods: {
-    login() {
-      this.isLoggedIn = true;
-    },
     logout() {
-      this.isLoggedIn = false;
-      this.$router.push({ name: "home" });
+      this.$emit("logout"); // Informe le parent pour la déconnexion
+      this.$router.push({ path: "/shop/home" });
     },
   },
 };
 </script>
 
 <style scoped>
-/*.v-btn {
-  margin-left: 10px;
-  font-weight: bold;
-}*/
-
-/*.v-toolbar-title {
-  font-weight: bold;
-  font-size: 1.2rem;
-}*/
-
-/* Animation au survol du logo */
 .logo {
   transition: transform 0.3s ease;
 }

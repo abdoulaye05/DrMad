@@ -49,19 +49,31 @@
 import { mapState, mapActions } from "vuex";
 
 export default {
-  name: "ShopLoginView",
+  name: "ShopLogin",
   data: () => ({
     login: "",
     password: "",
+    loginError: null, // Gestion locale de l'erreur de login
   }),
   computed: {
-    ...mapState(["shopUser", "loginError"]),
+    ...mapState(["shopUser"]), // Utilisateur connecté
   },
   methods: {
-    ...mapActions(["shopLogin"]),
-    handleLogin() {
-      this.shopLogin({ login: this.login, password: this.password });
-      if (this.shopUser) {
+    ...mapActions('shop', ["s2hopLogin"]), // Action Vuex pour la connexion
+    async handleLogin() {
+      this.loginError = null; // Réinitialisation de l'erreur
+      console.log('Tentative de connexion avec', this.login, this.password);
+
+
+      const response = await this.shopLogin({ login: this.login, password: this.password });
+      console.log('Réponse du serveur', response);
+
+
+      if (response.error) {
+        // Gestion de l'erreur (message affiché dans un v-alert)
+        this.loginError = response.data;
+      } else {
+        console.log('Connexion réussie, redirection vers /shop/buy');
         this.$router.push("/shop/buy");
       }
     },
