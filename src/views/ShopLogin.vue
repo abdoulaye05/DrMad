@@ -53,28 +53,21 @@ export default {
   data: () => ({
     login: "",
     password: "",
-    loginError: null, // Gestion locale de l'erreur de login
+    errorDialog: false,
+    errorMessage: "",
   }),
   computed: {
     ...mapState(["shopUser"]), // Utilisateur connecté
   },
   methods: {
-    ...mapActions('shop', ["shopLogin"]), // Action Vuex pour la connexion
+    ...mapActions("shop", ["shopLogin"]),
     async handleLogin() {
-      this.loginError = null; // Réinitialisation de l'erreur
-      console.log('Tentative de connexion avec', this.login, this.password);
-
-
-      const response = await this.shopLogin({ login: this.login, password: this.password });
-      console.log('Réponse du serveur', response);
-
-
-      if (response.error) {
-        // Gestion de l'erreur (message affiché dans un v-alert)
-        this.loginError = response.data;
-      } else {
-        console.log('Connexion réussie, redirection vers /shop/buy');
-        this.$router.push("/shop/buy");
+      try {
+        await this.shopLogin({ login: this.login, password: this.password });
+        this.$router.push({ name: "shopbuy" }); // Redirige vers la boutique après connexion
+      } catch (error) {
+        this.errorMessage = error.message;
+        this.errorDialog = true;
       }
     },
   },

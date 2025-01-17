@@ -12,6 +12,9 @@ const mutations = {
     },
     updateShopUser(state, user) {
         state.shopUser = user;
+        if (!user) {
+            state.basket = { items: [] };
+        }
     },
     updateBasket(state, basket) {
         state.basket = basket;
@@ -34,13 +37,14 @@ const mutations = {
 
 const actions = {
     async shopLogin({ commit }, data) {
-        console.log('login');
+        console.log('je rentre dans le shopLogin');
         let response = await ShopService.shopLogin(data);
         if (response.error === 0) {
             commit('updateShopUser', response.data);
         } else {
             console.log(response.data);
         }
+        console.log("shopLogin réussi,", response);
         return response;
     },
     async getAllViruses({ commit }) {

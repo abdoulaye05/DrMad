@@ -9,17 +9,6 @@ async function shopLoginFromAPI(data) {
   // a écrire quand l'API est fonctionnelle
   return {}
 }
- /
-
-async function getAllVirusesFromLocalSource() {
-  // récupération auprès de la source locale
-  return LocalSource.getAllViruses()
-}
-/
-async function getAllVirusesFromAPI() {
-  // a écrire quand l'API est fonctionnelle
-  return {}
-}
 */
 
 async function getAllVirusesFromLocalSource() {
