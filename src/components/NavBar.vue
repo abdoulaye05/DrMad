@@ -23,14 +23,14 @@
 
     <!-- Boutons supplémentaires pour utilisateurs connectés -->
     <template v-if="isLoggedIn">
-      <v-btn text :to="{ name: 'shopitems' }" exact>
-        <v-icon left>mdi-virus</v-icon> Virus
+      <v-btn text :to="{ name: 'shoppay' }" exact>
+        <v-icon left>mdi-virus</v-icon> Payer
       </v-btn>
       <v-btn text :to="{ name: 'shopbuy' }" exact>
-        <v-icon left>mdi-cart</v-icon> Buy
+        <v-icon left>mdi-cart</v-icon> Acheter
       </v-btn>
       <v-btn text :to="{ name: 'shoporders' }" exact>
-        <v-icon left>mdi-package-variant-closed</v-icon> Orders
+        <v-icon left>mdi-package-variant-closed</v-icon> Commandes
       </v-btn>
       <v-btn text @click="logout">
         <v-icon left>mdi-logout</v-icon> Logout
@@ -46,6 +46,8 @@
 
 <script>
 
+import {mapMutations} from "vuex";
+
 export default {
   name: "NavBar",
   props: {
@@ -55,9 +57,10 @@ export default {
     },
   },
   methods: {
+    ...mapMutations("shop", ["updateShopUser"]),
     logout() {
-      this.$emit("logout"); // Informe le parent pour la déconnexion
-      this.$router.push({ path: "/shop/home" });
+      this.updateShopUser(null); // Déconnecte l'utilisateur côté Vuex
+      this.$router.push({ path: "/shop/home" }); // Redirige vers la page d'accueil
     },
   },
 };

@@ -4,23 +4,27 @@ import bcrypt from 'bcryptjs';
 
 function shopLogin(data) {
   if (!data.login || !data.password) {
+    console.log('Aucun login/pass fourni');
     return { error: 1, status: 404, data: 'Aucun login/pass fourni' };
   }
 
   // Recherche d'un utilisateur par login
   let user = shopusers.find(e => e.login === data.login);
   if (!user) {
+    console.log('Login/pass incorrect');
     return { error: 1, status: 404, data: 'Login/pass incorrect' };
   }
 
   // Vérification du mot de passe avec bcrypt.compareSync
   const isPasswordValid = bcrypt.compareSync(data.password, user.password);
   if (!isPasswordValid) {
+    console.log('Login/pass incorrect');
     return { error: 1, status: 404, data: 'Login/pass incorrect' };
   }
 
   // Création de la session si elle n'existe pas encore
   if (!user.session) {
+    console.log('Création de la session');
     user.session = uuidv4();
   }
 
@@ -33,6 +37,7 @@ function shopLogin(data) {
     session: user.session,
   };
 
+  console.log('Utilisateur connecté', u);
   return { error: 0, status: 200, data: u };
 }
 
@@ -123,6 +128,23 @@ function createOrder(userId) {
   return { error: 0, status: 200, data: { uuid: order.uuid } };
 }
 
+function finalizeOrder(userId, orderId) {
+  let user = shopusers.find(u => u._id === userId);
+  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+
+  let order = user.orders ? user.orders.find(o => o.uuid === orderId) : null;
+  if (!order) return { error: 1, status: 404, data: "Commande non trouvée" };
+
+  if (order.status === "finalized") {
+    return { error: 1, status: 400, data: "Commande déjà finalisée" };
+  }
+
+  order.status = "finalized";
+
+  return { error: 0, status: 200, data: "Commande finalisée avec succès" };
+}
+
+
 
 export default {
   shopLogin,
@@ -131,5 +153,6 @@ export default {
   addToBasket,
   removeFromBasket,
   clearBasket,
+  finalizeOrder,
   createOrder,
 };

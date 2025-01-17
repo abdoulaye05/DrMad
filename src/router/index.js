@@ -1,13 +1,19 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import ShopView from '@/views/ShopView.vue';
-import BankAccountView from "@/views/BankAccountView.vue";
 import ShopHome from "@/views/ShopHome.vue";
 import ShopLogin from "@/views/ShopLogin.vue";
 import ShopBuy from "@/views/ShopBuy.vue";
 import ShopPay from "@/views/ShopPay.vue";
 import ShopOrders from "@/views/ShopOrders.vue";
 import HomePage from "@/views/HomePage.vue";
+import BankView from "@/components/BankView.vue";
+import BankHome from "@/views/BankHome.vue";
+import BankAmount from "@/views/BankAmount.vue";
+import BankOperation from "@/views/BankOperation.vue";
+import BankHistory from "@/views/BankHistory.vue";
+import BankLogout from "@/views/BankLogout.vue";
+import BankAccount from "@/views/BankAccount.vue";
 
 Vue.use(VueRouter)
 
@@ -38,9 +44,9 @@ const routes = [
         name: 'shopbuy'
       },
       {
-        path: 'pay/:orderId',
+        path: 'pay',
         component: ShopPay,
-        props: { shopmain: true },
+        props: route => ({ orderId: route.params.orderId }),
         name: 'shoppay'
       },
       {
@@ -52,16 +58,42 @@ const routes = [
   },
   {
     path: '/bank',
-    component: BankAccountView,
+    component: BankView,
     children: [
       {
-        path: '/bank/account',
-        name: 'bankaccount',
-        component: BankAccountView
+        path: 'home',
+        alias: '',
+        name: 'bankhome',
+        component: BankHome,
       },
-    ]
+      {
+        path: 'account',
+        name: 'bankaccount',
+        component: BankAccount,
+      },
+      {
+        path: 'amount',
+        name: 'bankamount',
+        component: BankAmount,
+      },
+      {
+        path: 'operation',
+        name: 'bankoperation',
+        component: BankOperation,
+      },
+      {
+        path: 'history',
+        name: 'bankhistory',
+        component: BankHistory,
+      },
+      {
+        path: 'logout',
+        name: 'banklogout',
+        component: BankLogout,
+      },
+    ],
+  },
 
-  }
 ];
 
 
