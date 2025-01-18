@@ -7,7 +7,7 @@ import ShopBuy from "@/views/ShopBuy.vue";
 import ShopPay from "@/views/ShopPay.vue";
 import ShopOrders from "@/views/ShopOrders.vue";
 import HomePage from "@/views/HomePage.vue";
-import BankView from "@/components/BankView.vue";
+import BankView from "@/views/BankView.vue";
 import BankHome from "@/views/BankHome.vue";
 import BankAmount from "@/views/BankAmount.vue";
 import BankOperation from "@/views/BankOperation.vue";

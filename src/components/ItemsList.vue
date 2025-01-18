@@ -33,7 +33,7 @@
         <!-- Bouton Ajouter au Panier -->
         <v-btn
             color="primary"
-            @click="addToBasket(item, quantities[index])"
+            @click="handleAddToBasket(item, quantities[index])"
             :disabled="!isValidQuantity(quantities[index])"
         >
           Ajouter
@@ -45,7 +45,7 @@
     <v-divider class="my-4"></v-divider>
     <v-btn
         color="success"
-        @click="addAllToBasket"
+        @click="handleAddAllToBasket"
         :disabled="!canAddAll"
         block
     >
@@ -86,14 +86,24 @@ export default {
       return quantity && quantity > 0 && Number.isInteger(quantity);
     },
 
-    async addToBasket(item, quantity) {
+    async handleAddToBasket(item, quantity) {
       if (this.isValidQuantity(quantity)) {
-        await this.addToBasket({ item, quantity });
-        this.showSuccessMessage(`Ajouté ${quantity} de ${item.name} au panier.`);
+        try {
+          const response = await this.addToBasket({ item, quantity });
+          if (response.error === 0) {
+            this.showSuccessMessage(`Ajouté ${quantity} de ${item.name} au panier.`);
+          } else {
+            console.error("[ItemsList] Erreur lors de l'ajout :", response.data);
+            alert("Une erreur est survenue lors de l'ajout au panier.");
+          }
+        } catch (err) {
+          console.error("[ItemsList] Erreur réseau lors de l'ajout :", err);
+          alert("Impossible d'ajouter l'article au panier.");
+        }
       }
     },
 
-    async addAllToBasket() {
+    async handleAddAllToBasket() {
       const selectedItems = this.items
           .map((item, index) => ({
             item,
@@ -101,15 +111,23 @@ export default {
           }))
           .filter((entry) => this.isValidQuantity(entry.quantity));
 
-      // Ajouter chaque article sélectionné au panier
-      for (const { item, quantity } of selectedItems) {
-        await this.addToBasket({ item, quantity });
+      if (selectedItems.length === 0) return;
+
+      try {
+        for (const { item, quantity } of selectedItems) {
+          const response = await this.addToBasket({ item, quantity });
+          if (response.error !== 0) {
+            console.error("[ItemsList] Erreur lors de l'ajout de tous les articles :", response.data);
+            alert(`Erreur pour l'article : ${item.name}`);
+            return;
+          }
+        }
+        this.showSuccessMessage("Tous les articles sélectionnés ont été ajoutés au panier.");
+        this.quantities = new Array(this.items.length).fill(0); // Réinitialiser les quantités après ajout
+      } catch (err) {
+        console.error("[ItemsList] Erreur réseau lors de l'ajout de tous les articles :", err);
+        alert("Une erreur est survenue lors de l'ajout de tous les articles.");
       }
-
-      this.showSuccessMessage("Tous les articles sélectionnés ont été ajoutés au panier.");
-
-      // Réinitialiser les quantités après ajout
-      this.quantities = new Array(this.items.length).fill(0);
     },
 
     showSuccessMessage(message) {

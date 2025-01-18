@@ -1,35 +1,33 @@
-import { items, shopusers } from './data';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
+import { items, shopusers } from "./data";
+import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcryptjs";
 
 function shopLogin(data) {
+  console.log("[Controller] Tentative de login avec :", data);
+
   if (!data.login || !data.password) {
-    console.log('Aucun login/pass fourni');
-    return { error: 1, status: 404, data: 'Aucun login/pass fourni' };
+    console.error("[Controller] Aucun login/mot de passe fourni");
+    return { error: 1, status: 400, data: "Login et mot de passe requis" };
   }
 
-  // Recherche d'un utilisateur par login
-  let user = shopusers.find(e => e.login === data.login);
+  const user = shopusers.find((e) => e.login === data.login);
   if (!user) {
-    console.log('Login/pass incorrect');
-    return { error: 1, status: 404, data: 'Login/pass incorrect' };
+    console.error("[Controller] Login non trouvé :", data.login);
+    return { error: 1, status: 404, data: "Login ou mot de passe incorrect" };
   }
 
-  // Vérification du mot de passe avec bcrypt.compareSync
   const isPasswordValid = bcrypt.compareSync(data.password, user.password);
   if (!isPasswordValid) {
-    console.log('Login/pass incorrect');
-    return { error: 1, status: 404, data: 'Login/pass incorrect' };
+    console.error("[Controller] Mot de passe incorrect pour l'utilisateur :", data.login);
+    return { error: 1, status: 403, data: "Login ou mot de passe incorrect" };
   }
 
-  // Création de la session si elle n'existe pas encore
   if (!user.session) {
-    console.log('Création de la session');
     user.session = uuidv4();
+    console.log("[Controller] Session créée pour l'utilisateur :", user.login);
   }
 
-  // Construction de l'objet utilisateur
-  const u = {
+  const sanitizedUser = {
     _id: user._id,
     name: user.name,
     login: user.login,
@@ -37,122 +35,118 @@ function shopLogin(data) {
     session: user.session,
   };
 
-  console.log('Utilisateur connecté', u);
-  return { error: 0, status: 200, data: u };
+  console.log("[Controller] Connexion réussie pour :", sanitizedUser);
+  return { error: 0, status: 200, data: sanitizedUser };
 }
 
+function getItems() {
+  console.log("[Controller] Récupération des articles disponibles :", items);
+  const itemsWithPromotions = items.map((item) => {
+    const bestPromotion = item.promotion?.reduce((best, promo) => {
+      return promo.discount > (best?.discount || 0) ? promo : best;
+    }, null);
 
-// Récupérer tous les articles
-function getAllViruses() {
-  return { error: 0, data: items };
+    return {
+      ...item,
+      promotion: bestPromotion,
+    };
+  });
+
+  return { error: 0, status: 200, data: itemsWithPromotions };
 }
 
-// Panier : Récupérer le panier de l'utilisateur
 function getBasket(userId) {
-  let user = shopusers.find(u => u._id === userId);
-  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
-  return { error: 0, status: 200, data: user.basket || { items: [] } };
+  console.log("[Controller] Tentative de récupération du panier pour userId :", userId);
+
+  const user = shopusers.find((u) => u._id === userId);
+  if (!user) {
+    console.error("[Controller] Utilisateur non trouvé pour userId :", userId);
+    return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  }
+
+  if (!user.basket) {
+    user.basket = { items: [] };
+    console.log("[Controller] Panier initialisé pour l'utilisateur :", user.login);
+  }
+
+  const basket = user.basket;
+  console.log("[Controller] Panier récupéré pour user :", user.login, basket);
+  return { error: 0, status: 200, data: basket };
 }
 
-// Panier : Ajouter un article
 function addToBasket(userId, { item, quantity }) {
-  let user = shopusers.find(u => u._id === userId);
-  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  console.log("[Controller] Tentative d'ajout au panier pour userId :", userId);
+
+  const user = shopusers.find((u) => u._id === userId);
+  if (!user) {
+    console.error("[Controller] Utilisateur non trouvé :", userId);
+    return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  }
+
+  if (!item || typeof item.name !== "string" || typeof item.price !== "number" || quantity <= 0) {
+    console.error("[Controller] Données invalides pour l'article :", { item, quantity });
+    return { error: 1, status: 400, data: "Données invalides pour l'article" };
+  }
 
   if (!user.basket) user.basket = { items: [] };
 
-  let existingItem = user.basket.items.find(i => i.item.name === item.name);
+  const existingItem = user.basket.items.find((i) => i.item.name === item.name);
   if (existingItem) {
     existingItem.quantity += quantity;
+    console.log("[Controller] Quantité mise à jour pour :", item.name, "Nouvelle quantité :", existingItem.quantity);
   } else {
     user.basket.items.push({ item, quantity });
+    console.log("[Controller] Nouvel article ajouté :", item.name);
   }
 
+  console.log("[Controller] Panier actuel pour userId :", userId, user.basket.items);
   return { error: 0, status: 200, data: user.basket };
 }
 
-// Panier : Supprimer un article
 function removeFromBasket(userId, itemName) {
-  let user = shopusers.find(u => u._id === userId);
-  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  console.log("[Controller] Tentative de suppression de l'article :", itemName, "pour userId :", userId);
 
-  if (!user.basket) return { error: 1, status: 404, data: "Panier vide" };
+  const user = shopusers.find((u) => u._id === userId);
+  if (!user) {
+    console.error("[Controller] Utilisateur non trouvé :", userId);
+    return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  }
 
-  user.basket.items = user.basket.items.filter(i => i.item.name !== itemName);
+  if (!user.basket || !user.basket.items) {
+    console.error("[Controller] Panier introuvable ou vide pour l'utilisateur :", user.login);
+    return { error: 1, status: 400, data: "Panier vide ou introuvable" };
+  }
 
+  const itemIndex = user.basket.items.findIndex((i) => i.item.name === itemName);
+  if (itemIndex === -1) {
+    console.error("[Controller] Article non trouvé dans le panier :", itemName);
+    return { error: 1, status: 404, data: "Article non trouvé dans le panier" };
+  }
+
+  user.basket.items.splice(itemIndex, 1);
+  console.log("[Controller] Article supprimé avec succès :", itemName);
   return { error: 0, status: 200, data: user.basket };
 }
 
-// Panier : Vider complètement
 function clearBasket(userId) {
-  let user = shopusers.find(u => u._id === userId);
-  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  console.log("[Controller] Tentative de vidage du panier pour userId :", userId);
 
-  user.basket = { items: [] };
+  const user = shopusers.find((u) => u._id === userId);
+  if (!user) {
+    console.error("[Controller] Utilisateur non trouvé :", userId);
+    return { error: 1, status: 404, data: "Utilisateur non trouvé" };
+  }
 
+  user.basket.items = [];
+  console.log("[Controller] Panier vidé avec succès pour l'utilisateur :", user.login);
   return { error: 0, status: 200, data: user.basket };
 }
-
-// Créer une commande
-function createOrder(userId) {
-  let user = shopusers.find(u => u._id === userId);
-  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
-
-  if (!user.basket || user.basket.items.length === 0) {
-    return { error: 1, status: 400, data: "Panier vide" };
-  }
-
-  let total = user.basket.items.reduce((sum, { item, quantity }) => {
-    let discount = item.promotion ? item.promotion.discount : 0;
-    let priceAfterDiscount = item.price * (1 - discount / 100);
-    return sum + priceAfterDiscount * quantity;
-  }, 0);
-
-  let order = {
-    items: user.basket.items.map(({ item, quantity }) => ({
-      item: { name: item.name, price: item.price },
-      quantity,
-    })),
-    total,
-    date: new Date(),
-    status: "waiting_payment",
-    uuid: uuidv4(),
-  };
-
-  if (!user.orders) user.orders = [];
-  user.orders.push(order);
-
-  // Vider le panier après création
-  user.basket = { items: [] };
-
-  return { error: 0, status: 200, data: { uuid: order.uuid } };
-}
-
-function finalizeOrder(userId, orderId) {
-  let user = shopusers.find(u => u._id === userId);
-  if (!user) return { error: 1, status: 404, data: "Utilisateur non trouvé" };
-
-  let order = user.orders ? user.orders.find(o => o.uuid === orderId) : null;
-  if (!order) return { error: 1, status: 404, data: "Commande non trouvée" };
-
-  if (order.status === "finalized") {
-    return { error: 1, status: 400, data: "Commande déjà finalisée" };
-  }
-
-  order.status = "finalized";
-
-  return { error: 0, status: 200, data: "Commande finalisée avec succès" };
-}
-
-
 
 export default {
   shopLogin,
-  getAllViruses,
+  getItems,
   getBasket,
   addToBasket,
   removeFromBasket,
   clearBasket,
-  finalizeOrder,
-  createOrder,
 };
