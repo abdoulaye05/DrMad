@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-card class="mx-auto pa-4" max-width="600" elevation="4">
       <!-- Titre -->
-      <v-card-title class="headline">Account Data</v-card-title>
+      <v-card-title class="headline">Bank Account</v-card-title>
       <v-card-text>
         <!-- Champ de saisie pour le numéro de compte -->
         <v-row>

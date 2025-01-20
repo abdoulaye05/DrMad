@@ -13,7 +13,8 @@ import BankAmount from "@/views/BankAmount.vue";
 import BankOperation from "@/views/BankOperation.vue";
 import BankHistory from "@/views/BankHistory.vue";
 import BankLogout from "@/views/BankLogout.vue";
-import BankAccount from "@/views/BankAccount.vue";
+import ShopVirus from "@/views/ShopVirus.vue";
+import BankAccountView from "@/views/BankAccountView.vue";
 
 Vue.use(VueRouter)
 
@@ -53,6 +54,11 @@ const routes = [
         path: 'orders',
         component: ShopOrders,
         name: 'shoporders'
+      },
+      {
+        path: 'viruses',
+        component: ShopVirus,
+        name: 'shopvirus'
       }
     ]
   },
@@ -69,7 +75,7 @@ const routes = [
       {
         path: 'account',
         name: 'bankaccount',
-        component: BankAccount,
+        component: BankAccountView,
       },
       {
         path: 'amount',

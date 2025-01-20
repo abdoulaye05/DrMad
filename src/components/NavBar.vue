@@ -24,7 +24,10 @@
     <!-- Boutons supplémentaires pour utilisateurs connectés -->
     <template v-if="isLoggedIn">
       <v-btn text :to="{ name: 'shoppay' }" exact>
-        <v-icon left>mdi-virus</v-icon> Payer
+        <v-icon left>mdi-gavel</v-icon> Payer
+      </v-btn>
+      <v-btn text :to="{ name: 'shopviruses' }" exact>
+        <v-icon left>mdi-virus</v-icon> Virus
       </v-btn>
       <v-btn text :to="{ name: 'shopbuy' }" exact>
         <v-icon left>mdi-cart</v-icon> Acheter
