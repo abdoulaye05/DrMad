@@ -20,17 +20,26 @@ const mutations = {
         state.basket = basket;
     },
     addItemToBasket(state, { item, quantity }) {
-        console.log("[Shop] Ajout d'un article au panier :", item.name, "Quantité :", quantity);
+        console.log("[Shop] Ajout d'un article :", item.name, "Quantité :", quantity);
+
         const existingItem = state.basket.items.find((i) => i.item.name === item.name);
         if (existingItem) {
-            existingItem.quantity += quantity;
+            existingItem.quantity += quantity; // Ajout à la quantité existante
+            console.log(`[Shop] Nouvelle quantité pour "${item.name}" : ${existingItem.quantity}`);
         } else {
-            state.basket.items.push({ item, quantity });
+            state.basket.items.push({ item, quantity }); // Ajout comme nouvel article
+            console.log(`[Shop] Nouvel article ajouté : "${item.name}", Quantité : ${quantity}`);
         }
     },
-    removeItemFromBasket(state, index) {
-        console.log("[Shop] Suppression d'un article du panier à l'index :", index);
-        state.basket.items.splice(index, 1);
+    removeItemFromBasket(state, itemName) {
+        console.log(`[Shop] Suppression de l'article : ${itemName}`);
+        const itemIndex = state.basket.items.findIndex((i) => i.item.name === itemName);
+        if (itemIndex !== -1) {
+            state.basket.items.splice(itemIndex, 1); // Supprimer l'article du panier
+            console.log(`[Shop] Article "${itemName}" supprimé avec succès.`);
+        } else {
+            console.warn(`[Shop] Article "${itemName}" introuvable dans le panier.`);
+        }
     },
     clearBasket(state) {
         console.log("[Shop] Vidage du panier.");
@@ -53,6 +62,23 @@ const actions = {
         } catch (err) {
             console.error("[Shop] Erreur réseau lors de la connexion :", err);
             return { error: 1, status: 500, data: "Erreur réseau, impossible de se connecter." };
+        }
+    },
+
+    async getAllViruses({ commit }) {
+        console.log("[Shop] Récupération des articles disponibles...");
+        try {
+            const response = await ShopService.getAllViruses();
+            if (response.error === 0) {
+                commit("updateViruses", response.data);
+                console.log("[Shop] Articles récupérés avec succès :", response.data);
+            } else {
+                console.error("[Shop] Erreur lors de la récupération des articles :", response.data);
+            }
+            return response;
+        } catch (err) {
+            console.error("[Shop] Erreur réseau lors de la récupération des articles :", err);
+            return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer les articles." };
         }
     },
 
@@ -79,7 +105,8 @@ const actions = {
     },
 
     async addToBasket({ commit, state }, { item, quantity }) {
-        console.log("[Shop] Tentative d'ajout au panier pour l'utilisateur :", state.shopUser);
+        console.log("[Shop] Tentative d'ajout au panier pour :", item.name, "Quantité :", quantity);
+
         if (!state.shopUser) {
             console.error("[Shop] Aucun utilisateur connecté.");
             return { error: 1, status: 401, data: "Utilisateur non connecté." };
@@ -100,25 +127,30 @@ const actions = {
         }
     },
 
-    async getAllViruses({ commit }) {
-        console.log("[Shop] Récupération des articles disponibles...");
+    async removeFromBasket({ commit, state }, itemName) {
+        console.log("[Shop] Suppression de l'article :", itemName);
+        if (!state.shopUser) {
+            console.error("[Shop] Aucun utilisateur connecté.");
+            return { error: 1, status: 401, data: "Utilisateur non connecté." };
+        }
+
         try {
-            const response = await ShopService.getAllViruses();
+            const response = await ShopService.removeFromBasket(state.shopUser._id, itemName);
             if (response.error === 0) {
-                commit("updateViruses", response.data);
-                console.log("[Shop] Articles récupérés avec succès :", response.data);
+                commit("removeItemFromBasket", itemName);
+                console.log(`[Shop] Article "${itemName}" supprimé avec succès.`);
             } else {
-                console.error("[Shop] Erreur lors de la récupération des articles :", response.data);
+                console.error(`[Shop] Erreur lors de la suppression de "${itemName}" :`, response.data);
             }
             return response;
         } catch (err) {
-            console.error("[Shop] Erreur réseau lors de la récupération des articles :", err);
-            return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer les articles." };
+            console.error("[Shop] Erreur réseau lors de la suppression de l'article :", err);
+            return { error: 1, status: 500, data: "Erreur réseau, impossible de supprimer l'article." };
         }
     },
 
     async clearBasket({ commit, state }) {
-        console.log("[Shop] Tentative de vidage du panier pour l'utilisateur :", state.shopUser);
+        console.log("[Shop] Tentative de vidage du panier pour :", state.shopUser);
         if (!state.shopUser) {
             console.error("[Shop] Aucun utilisateur connecté.");
             return { error: 1, status: 401, data: "Utilisateur non connecté." };
@@ -136,29 +168,6 @@ const actions = {
         } catch (err) {
             console.error("[Shop] Erreur réseau lors du vidage du panier :", err);
             return { error: 1, status: 500, data: "Erreur réseau, impossible de vider le panier." };
-        }
-    },
-
-    async removeFromBasket({ commit, state }, itemName) {
-        console.log("[Shop] Tentative de suppression de l'article :", itemName);
-        if (!state.shopUser) {
-            console.error("[Shop] Aucun utilisateur connecté.");
-            return { error: 1, status: 401, data: "Utilisateur non connecté." };
-        }
-
-        try {
-            const response = await ShopService.removeFromBasket(state.shopUser._id, itemName);
-            if (response.error === 0) {
-                const itemIndex = state.basket.items.findIndex((i) => i.item.name === itemName);
-                commit("removeItemFromBasket", itemIndex);
-                console.log("[Shop] Article supprimé avec succès :", itemName);
-            } else {
-                console.error("[Shop] Erreur lors de la suppression de l'article :", response.data);
-            }
-            return response;
-        } catch (err) {
-            console.error("[Shop] Erreur réseau lors de la suppression de l'article :", err);
-            return { error: 1, status: 500, data: "Erreur réseau, impossible de supprimer l'article." };
         }
     },
 };

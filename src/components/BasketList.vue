@@ -94,14 +94,16 @@ export default {
     async handleRemoveItem(itemName) {
       try {
         console.log(`Suppression de l'article : ${itemName}`);
-        const response = await this.removeFromBasket({ userId: this.shopUser._id, itemName });
+        const response = await this.removeFromBasket(itemName);
         if (response.error === 0) {
           this.showSuccessMessage(`L'article "${itemName}" a été supprimé.`);
         } else {
           console.error("Erreur lors de la suppression de l'article :", response.data);
+          alert("Impossible de supprimer cet article.");
         }
       } catch (error) {
         console.error("Erreur lors de la suppression de l'article :", error);
+        alert("Une erreur s'est produite. Veuillez réessayer.");
       }
     },
 
@@ -147,8 +149,9 @@ export default {
   mounted() {
     if (this.shopUser) {
       this.loadBasket();
+      console.log("[BasketList] Panier chargé :", this.basket);
     } else {
-      console.warn("Aucun utilisateur connecté. Impossible de charger le panier.");
+      console.warn("[BasketList] Aucun utilisateur connecté.");
     }
   },
 };
