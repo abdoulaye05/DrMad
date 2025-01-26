@@ -10,7 +10,6 @@
           :key="index"
           class="pa-2"
       >
-        <!-- Informations sur l'article -->
         <v-list-item-content>
           <v-list-item-title>{{ basketItem.item.name }}</v-list-item-title>
           <v-list-item-subtitle>
@@ -18,8 +17,6 @@
             Prix total : {{ (basketItem.item.price * basketItem.quantity).toFixed(2) }} €
           </v-list-item-subtitle>
         </v-list-item-content>
-
-        <!-- Bouton Supprimer -->
         <v-btn color="error" @click="handleRemoveItem(basketItem.item.name)">
           Supprimer
         </v-btn>
@@ -27,9 +24,7 @@
     </v-list>
 
     <!-- Message si le panier est vide -->
-    <v-alert v-else type="info" class="mt-4">
-      Le panier est vide.
-    </v-alert>
+    <v-alert v-else type="info" class="mt-4">Le panier est vide.</v-alert>
 
     <!-- Total du panier -->
     <v-divider class="my-4"></v-divider>
@@ -44,7 +39,7 @@
             color="error"
             block
             @click="handleClearBasket"
-            :disabled="!basket.items || basket.items.length === 0"
+            :disabled="!basket.items || basket.items.length === 0 || isLoading"
         >
           VIDER LE PANIER
         </v-btn>
@@ -54,21 +49,21 @@
             color="success"
             block
             @click="handleProcessOrder"
-            :disabled="!basket.items || basket.items.length === 0"
+            :disabled="!basket.items || basket.items.length === 0 || isLoading"
         >
           VALIDER LA COMMANDE
         </v-btn>
       </v-col>
     </v-row>
 
-    <!-- Message de succès -->
-    <v-alert v-if="successMessage" type="success" class="mt-4">
-      {{ successMessage }}
-    </v-alert>
+    <!-- Messages de succès et d'erreur -->
+    <v-alert v-if="successMessage" type="success" class="mt-4">{{ successMessage }}</v-alert>
+    <v-alert v-if="errorMessage" type="error" class="mt-4">{{ errorMessage }}</v-alert>
   </v-card>
 </template>
 
 <script>
+import ShopService from "@/services/shop.service";
 import { mapState, mapActions } from "vuex";
 
 export default {
@@ -76,82 +71,113 @@ export default {
   data() {
     return {
       successMessage: "",
+      errorMessage: "",
+      isLoading: false, // État de chargement
     };
   },
   computed: {
     ...mapState("shop", ["basket", "shopUser"]),
     calculatedTotal() {
-      // Calculer le total du panier
       if (!this.basket.items || this.basket.items.length === 0) return 0;
-      return this.basket.items.reduce((total, item) => {
-        return total + item.item.price * item.quantity;
-      }, 0);
+      return this.basket.items.reduce(
+          (total, item) => total + item.item.price * item.quantity,
+          0
+      );
     },
   },
   methods: {
-    ...mapActions("shop", ["removeFromBasket", "clearBasket", "createOrder", "loadBasket"]),
+    ...mapActions("shop", ["removeFromBasket", "clearBasket", "loadBasket"]),
 
     async handleRemoveItem(itemName) {
+      this.isLoading = true;
       try {
-        console.log(`Suppression de l'article : ${itemName}`);
         const response = await this.removeFromBasket(itemName);
         if (response.error === 0) {
           this.showSuccessMessage(`L'article "${itemName}" a été supprimé.`);
         } else {
-          console.error("Erreur lors de la suppression de l'article :", response.data);
-          alert("Impossible de supprimer cet article.");
+          this.showErrorMessage("Erreur lors de la suppression de l'article.");
         }
       } catch (error) {
-        console.error("Erreur lors de la suppression de l'article :", error);
-        alert("Une erreur s'est produite. Veuillez réessayer.");
+        this.showErrorMessage("Erreur réseau. Veuillez réessayer.");
+        console.error("[BasketList] Erreur réseau lors de la suppression :", error);
+      } finally {
+        this.isLoading = false;
       }
     },
 
     async handleClearBasket() {
+      this.isLoading = true;
       try {
-        console.log("Vidage du panier...");
         const response = await this.clearBasket(this.shopUser._id);
         if (response.error === 0) {
           this.showSuccessMessage("Le panier a été vidé avec succès !");
         } else {
-          console.error("Erreur lors du vidage du panier :", response.data);
+          this.showErrorMessage("Erreur lors du vidage du panier.");
         }
       } catch (error) {
-        console.error("Erreur lors du vidage du panier :", error);
+        this.showErrorMessage("Erreur réseau lors du vidage du panier.");
+        console.error("[BasketList] Erreur réseau lors du vidage du panier :", error);
+      } finally {
+        this.isLoading = false;
       }
     },
 
     async handleProcessOrder() {
+      this.isLoading = true;
       try {
-        console.log("Validation de la commande...");
-        const response = await this.createOrder(this.shopUser._id);
-        if (response.error === 0) {
-          console.log("Commande validée :", response.data.uuid);
-          this.$router.push(`/shop/pay/${response.data.uuid}`);
+        // Créer l'objet commande à partir du panier
+        const order = {
+          items: this.basket.items.map((basketItem) => ({
+            item: {
+              name: basketItem.item.name,
+              price: basketItem.item.price,
+            },
+            quantity: basketItem.quantity,
+          })),
+        };
+
+        const response = await ShopService.createOrder(this.shopUser._id, order);
+        console.log("[BasketList] Réponse de `createOrder` :", response);
+
+        // Vérifier que l'API retourne un `uuid`
+        if (response.error === 0 && response.data?.uuid) {
+          const orderUuid = response.data.uuid;
+
+          const clearResponse = await this.clearBasket(this.shopUser._id);
+          if (clearResponse.error !== 0) {
+            this.showErrorMessage("Erreur lors du vidage du panier après la commande.");
+            return;
+          }
+
+          this.successMessage = "Commande validée avec succès !";
+          setTimeout(() => {
+            this.$router.push({ name: "shoppay", params: { uuid: orderUuid } });
+          }, 2000);
         } else {
-          console.error("Erreur lors de la validation de la commande :", response.data);
-          alert("Erreur lors de la validation de la commande. Veuillez réessayer.");
+          this.showErrorMessage("Erreur ou absence d'UUID dans la réponse de l'API.");
         }
       } catch (error) {
-        console.error("Erreur inattendue lors de la validation de la commande :", error);
-        alert("Une erreur s'est produite. Veuillez réessayer.");
+        this.showErrorMessage("Erreur réseau lors de la validation de la commande.");
+        console.error("[BasketList] Erreur lors de la validation de la commande :", error);
+      } finally {
+        this.isLoading = false;
       }
     },
 
     showSuccessMessage(message) {
       this.successMessage = message;
-      setTimeout(() => {
-        this.successMessage = "";
-      }, 3000);
+      setTimeout(() => (this.successMessage = ""), 3000);
+    },
+
+    showErrorMessage(message) {
+      this.errorMessage = message;
+      setTimeout(() => (this.errorMessage = ""), 3000);
     },
   },
 
   mounted() {
     if (this.shopUser) {
       this.loadBasket();
-      console.log("[BasketList] Panier chargé :", this.basket);
-    } else {
-      console.warn("[BasketList] Aucun utilisateur connecté.");
     }
   },
 };

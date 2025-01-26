@@ -1,28 +1,28 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
+import Vue from 'vue';
+import VueRouter from 'vue-router';
 import ShopView from '@/views/ShopView.vue';
-import ShopHome from "@/views/ShopHome.vue";
-import ShopLogin from "@/views/ShopLogin.vue";
-import ShopBuy from "@/views/ShopBuy.vue";
-import ShopPay from "@/views/ShopPay.vue";
-import ShopOrders from "@/views/ShopOrders.vue";
-import HomePage from "@/views/HomePage.vue";
-import BankView from "@/views/BankView.vue";
-import BankHome from "@/views/BankHome.vue";
-import BankAmount from "@/views/BankAmount.vue";
-import BankOperation from "@/views/BankOperation.vue";
-import BankHistory from "@/views/BankHistory.vue";
-import BankLogout from "@/views/BankLogout.vue";
-import ShopVirus from "@/views/ShopVirus.vue";
-import BankAccountView from "@/views/BankAccountView.vue";
+import ShopHome from '@/views/ShopHome.vue';
+import ShopLogin from '@/views/ShopLogin.vue';
+import ShopBuy from '@/views/ShopBuy.vue';
+import ShopPay from '@/views/ShopPay.vue';
+import ShopOrders from '@/views/ShopOrders.vue';
+import HomePage from '@/views/HomePage.vue';
+import BankView from '@/views/BankView.vue';
+import BankHome from '@/views/BankHome.vue';
+import BankAmount from '@/views/BankAmount.vue';
+import BankOperation from '@/views/BankOperation.vue';
+import BankHistory from '@/views/BankHistory.vue';
+import BankLogout from '@/views/BankLogout.vue';
+import ShopVirus from '@/views/ShopVirus.vue';
+import BankAccountView from '@/views/BankAccountView.vue';
 
-Vue.use(VueRouter)
+Vue.use(VueRouter);
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomePage
+    component: HomePage,
   },
   {
     path: '/shop',
@@ -32,35 +32,35 @@ const routes = [
         path: 'home',
         component: ShopHome,
         name: 'shophome',
-        alias: ''
+        alias: '',
       },
       {
         path: 'login',
         component: ShopLogin,
-        name: 'shoplogin'
+        name: 'shoplogin',
       },
       {
         path: 'buy',
         component: ShopBuy,
-        name: 'shopbuy'
+        name: 'shopbuy',
       },
       {
-        path: 'pay',
+        path: 'pay/:uuid',
         component: ShopPay,
-        props: route => ({ orderId: route.params.orderId }),
-        name: 'shoppay'
+        props: true,
+        name: 'shoppay',
       },
       {
         path: 'orders',
         component: ShopOrders,
-        name: 'shoporders'
+        name: 'shoporders',
       },
       {
         path: 'viruses',
         component: ShopVirus,
-        name: 'shopvirus'
-      }
-    ]
+        name: 'shopviruses', // Correction
+      },
+    ],
   },
   {
     path: '/bank',
@@ -99,14 +99,12 @@ const routes = [
       },
     ],
   },
-
 ];
-
 
 const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
-  routes
-})
+  routes,
+});
 
-export default router
+export default router;
