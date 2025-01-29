@@ -5,21 +5,39 @@ import bcrypt from "bcryptjs";
 // Gestion de la connexion des utilisateurs
 function shopLogin(data) {
   console.log("[Controller] Tentative de connexion avec :", data);
+
+  // Vérification des données d'entrée
   if (!data.login || !data.password) {
     console.error("[Controller] Login ou mot de passe manquant.");
     return { error: 1, status: 400, data: "Login et mot de passe requis." };
   }
 
+  // Recherche de l'utilisateur
   const user = shopusers.find((e) => e.login === data.login);
-  if (!user || !bcrypt.compareSync(data.password, user.password)) {
-    console.error("[Controller] Login ou mot de passe incorrect.");
+  console.log("[Controller] Utilisateur trouvé :", user);
+
+  if (!user) {
+    console.error("[Controller] Utilisateur introuvable pour le login :", data.login);
     return { error: 1, status: 403, data: "Login ou mot de passe incorrect." };
   }
 
+  // Vérification du mot de passe
+  const isPasswordValid = bcrypt.compareSync(data.password, user.password);
+  console.log("[Controller] Mot de passe fourni :", data.password);
+  console.log("[Controller] Mot de passe stocké :", user.password);
+  console.log("[Controller] Résultat de bcrypt.compareSync :", isPasswordValid);
+
+  if (!isPasswordValid) {
+    console.error("[Controller] Mot de passe incorrect pour le login :", data.login);
+    return { error: 1, status: 403, data: "Login ou mot de passe incorrect." };
+  }
+
+  // Générer une session si elle n'existe pas
   if (!user.session) {
     user.session = uuidv4();
   }
 
+  // Préparer les données utilisateur à retourner
   const sanitizedUser = {
     _id: user._id,
     name: user.name,
@@ -32,6 +50,7 @@ function shopLogin(data) {
   console.log("[Controller] Utilisateur connecté avec succès :", sanitizedUser);
   return { error: 0, status: 200, data: sanitizedUser };
 }
+
 
 // Retourne les articles disponibles avec leurs promotions optimisées
 function getItems() {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Bank Home</h1>
+    <h1> Bienvenue à Bank Home</h1>
   </div>
 </template>
 <script>

@@ -2,11 +2,10 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import ShopView from '@/views/ShopView.vue';
 import ShopHome from '@/views/ShopHome.vue';
-import ShopLogin from '@/views/ShopLogin.vue';
-import ShopBuy from '@/views/ShopBuy.vue';
-import ShopPay from '@/views/ShopPay.vue';
-import ShopOrders from '@/views/ShopOrders.vue';
-import HomePage from '@/views/HomePage.vue';
+import ShopLoginView from '@/views/ShopLoginView.vue';
+import ShopBuyView from '@/views/ShopBuyView.vue';
+import ShopPayView from '@/views/ShopPayView.vue';
+import ShopOrdersView from '@/views/ShopOrdersView.vue';
 import BankView from '@/views/BankView.vue';
 import BankHome from '@/views/BankHome.vue';
 import BankAmount from '@/views/BankAmount.vue';
@@ -19,40 +18,36 @@ import BankAccountView from '@/views/BankAccountView.vue';
 Vue.use(VueRouter);
 
 const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomePage,
-  },
+  // Boutiques
   {
     path: '/shop',
     component: ShopView,
+    alias: '',
     children: [
       {
         path: 'home',
         component: ShopHome,
         name: 'shophome',
-        alias: '',
       },
       {
         path: 'login',
-        component: ShopLogin,
+        component: ShopLoginView,
         name: 'shoplogin',
       },
       {
         path: 'buy',
-        component: ShopBuy,
+        component: ShopBuyView,
         name: 'shopbuy',
       },
       {
         path: 'pay/:uuid',
-        component: ShopPay,
+        component: ShopPayView,
         props: true,
         name: 'shoppay',
       },
       {
         path: 'orders',
-        component: ShopOrders,
+        component: ShopOrdersView,
         name: 'shoporders',
       },
       {
@@ -62,13 +57,14 @@ const routes = [
       },
     ],
   },
+
+  // Banque
   {
     path: '/bank',
     component: BankView,
     children: [
       {
         path: 'home',
-        alias: '',
         name: 'bankhome',
         component: BankHome,
       },

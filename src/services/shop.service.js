@@ -3,9 +3,11 @@ import LocalSource from "@/datasource/controller";
 async function shopLogin(data) {
   console.log("[ShopService] Tentative de connexion avec :", data);
   try {
+    // Appel à LocalSource
     const response = await LocalSource.shopLogin(data);
     console.log("[ShopService] Réponse reçue de shopLogin :", response);
 
+    // Vérifie la réponse
     if (response.error === 0) {
       console.log("[ShopService] Connexion réussie :", response.data);
       return response;
@@ -14,10 +16,12 @@ async function shopLogin(data) {
       return { error: 1, status: response.status, data: response.data };
     }
   } catch (err) {
+    // Gestion des erreurs réseau
     console.error("[ShopService] Erreur réseau lors de la connexion :", err.message);
     return { error: 1, status: 500, data: "Erreur réseau, impossible de se connecter." };
   }
 }
+
 
 async function getAllViruses() {
   console.log("[ShopService] Récupération des articles disponibles...");

@@ -2,14 +2,14 @@
   <v-container fluid>
     <v-card class="mx-auto pa-4" max-width="600" elevation="4">
       <!-- Titre -->
-      <v-card-title class="headline">Bank Account</v-card-title>
+      <v-card-title class="headline">Compte Bancaire</v-card-title>
       <v-card-text>
         <!-- Champ de saisie pour le numéro de compte -->
         <v-row>
           <v-col cols="12">
             <v-text-field
                 v-model="number"
-                label="Account Number"
+                label="Numéro de compte"
                 outlined
                 dense
                 clearable
@@ -29,7 +29,7 @@
                 @click="getAccountAmount(number)"
                 block
             >
-              GET AMOUNT
+              OBTENIR LE MONTANT
             </v-btn>
           </v-col>
           <v-col cols="6">
@@ -39,7 +39,7 @@
                 @click="getAccountTransactions(number)"
                 block
             >
-              GET TRANSACTIONS
+              OBTENIR LES TRANSACTIONS
             </v-btn>
           </v-col>
         </v-row>
@@ -118,6 +118,7 @@ export default {
       this.number = "";
       this.updateAccountNumberError(0);
     },
+
   },
 };
 </script>

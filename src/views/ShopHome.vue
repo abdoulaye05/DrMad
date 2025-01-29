@@ -1,29 +1,57 @@
 <template>
-  <v-container class="mt-5 d-flex justify-center">
-    <v-card class="elevation-12" max-width="400">
-      <v-card-title class="text-h5 text-center">Welcome to the Shop</v-card-title>
-      <v-card-text>
-        <p class="text-center">Explore our products and enjoy shopping!</p>
-        <v-btn
-            color="primary"
-            block
-            class="mt-4"
-            @click="goToBuy"
-        >
-          Start Shopping
-        </v-btn>
-      </v-card-text>
-    </v-card>
-  </v-container>
+  <v-app>
+    <v-app-bar app color="#800020" dark>
+      <v-img
+          src="@/assets/logo1.png"
+          alt="DrMad Logo"
+          max-width="100"
+          class="mr-4"
+      ></v-img>
+      <v-spacer></v-spacer>
+      <v-btn text @click="redirectTo('shopLogin')">
+        <v-icon left>mdi-store</v-icon>
+            Boutique </v-btn>
+      <v-btn text @click="redirectTo('bankHome')">
+        <v-icon left>mdi-bank</v-icon>
+        Banque </v-btn>
+    </v-app-bar>
+
+    <v-container class="d-flex justify-center align-center" style="min-height: 70vh;">
+      <div v-if="currentPage === 'home'">
+        <v-img
+            src="@/assets/logo1.png"
+            alt="DrMad Logo"
+            max-width="500"
+            class="mr-4"
+        ></v-img>
+        <h1 class="text-h2 font-weight-bold">Bienvenue sur DrMad</h1>
+      </div>
+    </v-container>
+  </v-app>
 </template>
 
 <script>
 export default {
-  name: "ShopHome",
+  name: 'ShopHome',
+  data() {
+    return {
+      currentPage: 'home', // Default page
+    };
+  },
   methods: {
-    goToBuy() {
-      this.$router.push("/shop/buy");
+    redirectTo(route) {
+      if (route === 'shopLogin') {
+        this.$router.push({ name: 'shoplogin' });
+      } else if (route === 'bankHome') {
+        this.$router.push({ name: 'bankaccount' });
+      }
     },
   },
 };
 </script>
+
+<style scoped>
+html {
+  scroll-behavior: smooth;
+}
+</style>

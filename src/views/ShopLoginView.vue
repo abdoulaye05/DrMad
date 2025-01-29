@@ -49,7 +49,7 @@
 import { mapState, mapActions } from "vuex";
 
 export default {
-  name: "ShopLogin",
+  name: "ShopLoginView",
   data: () => ({
     login: "drmad",
     password: "drmad",
@@ -63,8 +63,13 @@ export default {
     ...mapActions("shop", ["shopLogin"]),
     async handleLogin() {
       try {
-        await this.shopLogin({ login: this.login, password: this.password });
-        this.$router.push({ name: "shopbuy" }); // Redirige vers la boutique après connexion
+        const response = await this.shopLogin({ login: this.login, password: this.password });
+        if (response.error !== 0) {
+          this.errorMessage = "Login ou mot de passe incorrect.";
+          this.errorDialog = true;
+        }else {
+          await this.$router.push({name: "shopbuy"}); // Redirige vers la boutique après connexion
+        }
       } catch (error) {
         this.errorMessage = error.message;
         this.errorDialog = true;
