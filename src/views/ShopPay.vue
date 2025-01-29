@@ -5,30 +5,20 @@
       <v-divider></v-divider>
       <v-card-text>
         <!-- Message avec l'UUID et le total de la commande -->
-        <p v-if="uuid || commandUuid" class="text-center mt-2">
-          Vous êtes sur le point de payer la commande n° <strong>{{ uuid || commandUuid }}</strong>.
+        <p v-if="order" class="text-center mt-2">
+          Vous êtes sur le point de payer la commande n° <strong>{{ order.uuid }}</strong>.
           <br />
-          Montant total :
-          <strong v-if="isTotalValid">{{ total.toFixed(2) }} €</strong>
-          <span v-else class="text-danger">Non défini</span>
+          Montant total : <strong>{{ order.total.toFixed(2) }} €</strong>
+          <br />
+          <span v-if="order.transactionDate">
+            Date de Transaction : <strong>{{ formatDate(order.transactionDate) }}</strong>
+          </span>
         </p>
         <p v-else class="text-center text-danger mt-2">
-          Merci de renseigner l'UUID de la commande ci-dessous.
+          Commande introuvable ou chargement en cours...
         </p>
 
-        <!-- Champ pour UUID de la commande si non fourni -->
-        <v-text-field
-            v-if="!uuid"
-            v-model="commandUuid"
-            label="UUID de la commande"
-            outlined
-            dense
-            class="mt-4"
-            :rules="[v => !!v || 'Ce champ est obligatoire']"
-            prepend-inner-icon="mdi-package"
-        ></v-text-field>
-
-        <!-- Champ pour UUID de la transaction bancaire -->
+        <!-- Champ pour UUID de transaction bancaire -->
         <v-text-field
             v-model="transactionId"
             label="UUID de transaction bancaire"
@@ -46,7 +36,7 @@
             class="mt-4"
             @click="handlePayOrder"
             :loading="isPaying"
-            :disabled="isPaying || !(uuid || commandUuid) || !transactionId || !isTotalValid"
+            :disabled="isPaying || !order || !transactionId"
         >
           {{ isPaying ? "Paiement en cours..." : "Payer Maintenant" }}
         </v-btn>
@@ -71,73 +61,92 @@ export default {
   props: {
     uuid: {
       type: String,
-      default: null, // UUID de commande optionnel
-    },
-    total: {
-      type: Number,
-      default: null, // Montant total de la commande
+      required: true, // UUID de commande requis
     },
   },
   data() {
     return {
-      commandUuid: "", // UUID de commande si non fourni en paramètre
+      order: null, // Commande récupérée via l'UUID
       transactionId: "", // UUID de transaction bancaire
-      isPaying: false, // Indicateur de chargement
+      isPaying: false, // État de chargement du paiement
       successMessage: "", // Message de succès
       errorMessage: "", // Message d'erreur
     };
   },
-  computed: {
-    isTotalValid() {
-      return this.total !== null && this.total > 0;
-    },
-  },
   methods: {
-    ...mapActions("shop", ["payOrder"]),
+    ...mapActions("shop", ["getOrder", "payOrder"]),
+
+    async loadOrder() {
+      try {
+        // Rechercher la commande via l'UUID
+        const response = await this.getOrder(this.uuid);
+        if (response.error === 0) {
+          this.order = response.data;
+          console.log("[ShopPay] Commande chargée avec succès :", this.order);
+        } else {
+          this.errorMessage = "Erreur lors du chargement de la commande.";
+          console.error("[ShopPay] Erreur de chargement :", response);
+        }
+      } catch (error) {
+        this.errorMessage = "Erreur réseau lors du chargement de la commande.";
+        console.error("[ShopPay] Erreur réseau :", error);
+      }
+    },
 
     async handlePayOrder() {
-      const orderId = this.uuid || this.commandUuid; // Utilise l'UUID passé ou celui renseigné manuellement
-      if (!orderId || !this.transactionId) {
+      if (!this.order || !this.transactionId) {
         alert("Veuillez remplir tous les champs !");
         return;
       }
 
-      console.log(`[ShopPay] Paiement de la commande n° ${orderId} avec UUID de transaction : ${this.transactionId}`);
+      console.log(`[ShopPay] Paiement de la commande n° ${this.order.uuid} avec UUID de transaction : ${this.transactionId}`);
       this.isPaying = true;
       this.successMessage = "";
       this.errorMessage = "";
 
       try {
-        // Appel Vuex pour effectuer le paiement
         const response = await this.payOrder({
-          orderId,
+          orderId: this.order.uuid,
           transactionId: this.transactionId,
         });
 
         console.log("[ShopPay] Réponse reçue :", response);
 
         if (response.error === 0) {
-          // Succès du paiement
-          this.successMessage = `Paiement effectué avec succès pour la commande n° ${orderId}.`;
+          this.order.transactionDate = response.data.transactionDate || new Date(); // Ajout de la date
+          this.successMessage = `Paiement effectué avec succès pour la commande n° ${this.order.uuid}.`;
           console.log("[ShopPay] Paiement réussi :", response.data);
 
-          // Redirection vers la page des commandes
+          // Redirection vers la page des commandes après le succès
           setTimeout(() => {
             this.$router.push({ name: "shoporders" });
           }, 1500);
         } else {
-          // Erreur lors du paiement
           this.errorMessage = response.data || "Erreur lors du paiement.";
           console.error("[ShopPay] Erreur lors du paiement :", response);
         }
       } catch (error) {
-        // Erreur réseau
         this.errorMessage = "Une erreur réseau s'est produite. Veuillez réessayer.";
         console.error("[ShopPay] Erreur réseau lors du paiement :", error);
       } finally {
         this.isPaying = false;
       }
     },
+
+    formatDate(date) {
+      const d = new Date(date);
+      return d.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    },
+  },
+  async created() {
+    // Charger la commande dès que le composant est monté
+    await this.loadOrder();
   },
 };
 </script>

@@ -143,12 +143,14 @@ export default {
         if (response.error === 0 && response.data?.uuid) {
           const orderUuid = response.data.uuid;
 
+          // Vider le panier après création de la commande
           const clearResponse = await this.clearBasket(this.shopUser._id);
           if (clearResponse.error !== 0) {
             this.showErrorMessage("Erreur lors du vidage du panier après la commande.");
             return;
           }
 
+          // Rediriger vers `ShopPay` avec l'UUID uniquement
           this.successMessage = "Commande validée avec succès !";
           setTimeout(() => {
             this.$router.push({ name: "shoppay", params: { uuid: orderUuid } });

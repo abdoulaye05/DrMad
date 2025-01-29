@@ -247,6 +247,25 @@ function getOrders(userId) {
   return { error: 0, status: 200, data: user.orders };
 }
 
+// Retourne une commande spécifique par UUID
+function getOrder(uuid) {
+  console.log(`[Controller] Récupération de la commande UUID : ${uuid}`);
+  const user = shopusers.find((u) => u.orders.some((order) => order.uuid === uuid));
+  if (!user) {
+    console.error("[Controller] Utilisateur introuvable !");
+    return { error: 1, status: 404, data: "Utilisateur introuvable." };
+  }
+
+  const order = user.orders.find((o) => o.uuid === uuid);
+  if (!order) {
+    console.error("[Controller] Commande introuvable !");
+    return { error: 1, status: 404, data: "Commande introuvable." };
+  }
+
+  console.log("[Controller] Commande récupérée avec succès :", order);
+  return { error: 0, status: 200, data: order };
+}
+
 export default {
   shopLogin,
   getItems,
@@ -258,4 +277,5 @@ export default {
   payOrder,
   cancelOrder,
   getOrders,
+  getOrder,
 };

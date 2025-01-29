@@ -51,8 +51,8 @@ import { mapState, mapActions } from "vuex";
 export default {
   name: "ShopLogin",
   data: () => ({
-    login: "",
-    password: "",
+    login: "drmad",
+    password: "drmad",
     errorDialog: false,
     errorMessage: "",
   }),

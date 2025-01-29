@@ -17,6 +17,7 @@
             hide-default-footer
             style="border-radius: 10px; overflow: hidden;"
         >
+          <!-- Toolbar au-dessus du tableau -->
           <template v-slot:top>
             <v-toolbar flat>
               <v-toolbar-title>Liste des Commandes</v-toolbar-title>
@@ -25,6 +26,11 @@
                 <v-icon>mdi-refresh</v-icon>
               </v-btn>
             </v-toolbar>
+          </template>
+
+          <!-- Colonne Date de Transaction -->
+          <template v-slot:[`item.transactionDate`]="{ item }">
+            {{ formatDate(item.transactionDate) }}
           </template>
 
           <!-- Colonne pour le statut -->
@@ -76,6 +82,7 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
+import ShopService from "@/services/shop.service"
 
 export default {
   name: "ShopOrders",
@@ -83,10 +90,11 @@ export default {
     return {
       isLoading: false,
       headers: [
-        { text: "UUID Commande", value: "uuid", align: "start", width: "40%" },
-        { text: "Montant Total (€)", value: "total", align: "center", width: "20%" },
-        { text: "Statut", value: "status", align: "center", width: "20%" },
-        { text: "Actions", value: "actions", align: "end", sortable: false, width: "20%" },
+        { text: "UUID Commande", value: "uuid", align: "start", width: "30%" },
+        { text: "Montant Total (€)", value: "total", align: "center", width: "15%" },
+        { text: "Date de Transaction", value: "transactionDate", align: "center", width: "25%" },
+        { text: "Statut", value: "status", align: "center", width: "15%" },
+        { text: "Actions", value: "actions", align: "end", sortable: false, width: "15%" },
       ],
     };
   },
@@ -139,7 +147,6 @@ export default {
       }
 
       const order = this.orders.find((o) => o.uuid === orderUuid);
-
       if (!order) {
         console.error("[ShopOrders] Commande introuvable pour UUID :", orderUuid);
         alert("Erreur : commande introuvable.");
@@ -173,7 +180,7 @@ export default {
 
       try {
         this.isLoading = true;
-        const response = await this.cancelOrder(orderUuid);
+        const response = await ShopService.cancelOrder(orderUuid);
         console.log("[ShopOrders] Réponse reçue de cancelOrder :", response);
 
         if (response?.error === 0) {
@@ -215,6 +222,18 @@ export default {
         default:
           return "grey";
       }
+    },
+
+    formatDate(date) {
+      if (!date || date === "N/A") return "N/A"; // Gérer les dates manquantes
+      const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      };
+      return new Date(date).toLocaleDateString("fr-FR", options);
     },
   },
 

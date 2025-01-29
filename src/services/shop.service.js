@@ -60,14 +60,12 @@ async function getOrders(userId) {
     console.log("[ShopService] Réponse reçue de getOrders :", response);
 
     if (response.error === 0) {
-      // Formatage des commandes avec un montant total par défaut si absent
       response.data = response.data.map((order) => ({
         ...order,
         total: order.total || 0,
+        transactionDate: order.date?.$date || "N/A", //
       }));
       console.log("[ShopService] Commandes formatées avec succès :", response.data);
-    } else {
-      console.warn("[ShopService] Erreur lors de la récupération des commandes :", response.data);
     }
 
     return response;
@@ -167,6 +165,20 @@ async function createOrder(userId) {
   }
 }
 
+async function getOrder(uuid) {
+  console.log(`[ShopService] Récupération de la commande UUID : ${uuid}`);
+  try {
+    const response = await LocalSource.getOrder(uuid);
+    console.log("[ShopService] Réponse reçue de getOrder :", response);
+    return response.error === 0
+        ? response
+        : { error: 1, status: response.status, data: response.data };
+  } catch (err) {
+    console.error("[ShopService] Erreur réseau lors de la récupération de la commande :", err.message);
+    return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer la commande." };
+  }
+}
+
 async function payOrder(orderId, transactionUuid) {
   console.log("[ShopService] Paiement de la commande :", orderId, "avec transactionUuid :", transactionUuid);
   try {
@@ -212,6 +224,7 @@ export default {
   removeFromBasket,
   clearBasket,
   createOrder,
+  getOrder,
   payOrder,
   cancelOrder,
 };

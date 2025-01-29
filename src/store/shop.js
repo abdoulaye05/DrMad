@@ -23,7 +23,10 @@ const mutations = {
     },
     updateOrders(state, orders) {
         console.log("[Shop] Mise à jour des commandes :", orders);
-        state.orders = orders;
+        state.orders = orders.map((order) => ({
+            ...order,
+            transactionDate: order.date?.$date || "N/A", // Gérer les cas où transactionDate est absent
+        }));
     },
     addItemToBasket(state, { item, quantity }) {
         console.log("[Shop] Ajout d'un article :", item.name, "Quantité :", quantity);
@@ -255,6 +258,26 @@ const actions = {
         } catch (err) {
             console.error("[Shop] Erreur réseau lors du paiement :", err);
             return { error: 1, status: 500, data: "Erreur réseau, impossible de valider le paiement." };
+        }
+    },
+
+    async getOrder({ state }, uuid) {
+        console.log(`[Shop] Récupération de la commande UUID : ${uuid}`);
+        if (!state.shopUser) {
+            console.error("[Shop] Aucun utilisateur connecté.");
+            return { error: 1, status: 401, data: "Utilisateur non connecté." };
+        }
+        try {
+            const response = await ShopService.getOrder(uuid);
+            if (response.error === 0) {
+                console.log(`[Shop] Commande UUID "${uuid}" récupérée avec succès :`, response.data);
+            } else {
+                console.error(`[Shop] Erreur lors de la récupération de la commande UUID "${uuid}" :`, response.data);
+            }
+            return response;
+        } catch (err) {
+            console.error("[Shop] Erreur réseau lors de la récupération de la commande :", err);
+            return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer la commande." };
         }
     },
 };
