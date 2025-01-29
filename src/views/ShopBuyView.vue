@@ -58,7 +58,6 @@
 <script>
 import ItemsList from "../components/ItemsList.vue";
 import BasketList from "../components/BasketList.vue";
-import { mapActions } from "vuex";
 
 export default {
   name: "ShopBuy",
