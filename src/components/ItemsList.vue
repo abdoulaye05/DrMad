@@ -27,7 +27,8 @@
             label="Quantité"
             type="number"
             min="0"
-            dense outlined
+            dense
+            outlined
             class="mr-2"
             style="max-width: 100px;"
             :disabled="item.stock === 0"
@@ -80,14 +81,15 @@ export default {
   },
   data() {
     return {
-      quantities: [], // Quantités par article
+      quantities: [], // Stocke les quantités par article
       successMessage: "", // Message de confirmation
-      adding: false, // Pour éviter plusieurs clics rapides
+      adding: false, // Pour éviter plusieurs ajouts simultanés
     };
   },
   computed: {
     ...mapState("shop", ["viruses"]),
 
+    // Filtrage et tri des articles
     filteredItems() {
       let items = [...this.viruses];
 
@@ -117,6 +119,13 @@ export default {
 
       return items;
     },
+
+    // Vérifie si au moins un article est sélectionné
+    canAddAll() {
+      return this.quantities.some((qty, index) =>
+          this.isValidQuantity(qty, this.filteredItems[index]?.stock)
+      );
+    },
   },
   methods: {
     ...mapActions("shop", ["addToBasket"]),
@@ -125,17 +134,78 @@ export default {
       return quantity > 0 && quantity <= stock && Number.isInteger(quantity);
     },
 
+    // Ajout d'un seul article au panier
     async handleAddToBasket(item, quantity, index) {
       if (this.adding || !this.isValidQuantity(quantity, item.stock)) return;
       this.adding = true;
+
+      console.log(`[ItemsList] 🛒 Tentative d'ajout : ${quantity} x ${item.name}`);
+
       try {
-        await this.addToBasket({ item, quantity });
-        this.showSuccessMessage(`Ajouté ${quantity} de ${item.name} au panier.`);
-        this.quantities[index] = 0;
+        const response = await this.addToBasket({ item, quantity });
+        console.log("[ItemsList] ✅ Réponse de addToBasket :", response);
+
+        if (response?.error === 0) {
+          this.showSuccessMessage(`Ajouté ${quantity} de ${item.name} au panier.`);
+          this.quantities[index] = 0;
+        } else {
+          alert(`Erreur : ${response?.data || "Impossible d'ajouter au panier."}`);
+        }
       } finally {
         this.adding = false;
       }
     },
+
+    // Ajout de tous les articles sélectionnés
+    async handleAddAllToBasket() {
+      if (this.adding) return;
+      this.adding = true;
+
+      try {
+        const selectedItems = this.filteredItems
+            .map((item, index) => ({
+              item,
+              quantity: this.quantities[index] || 0,
+            }))
+            .filter(({ item, quantity }) => this.isValidQuantity(quantity, item.stock));
+
+        if (selectedItems.length === 0) {
+          console.warn("[ItemsList] Aucun article sélectionné !");
+          return;
+        }
+
+        for (const { item, quantity } of selectedItems) {
+          await this.addToBasket({ item, quantity });
+        }
+
+        this.showSuccessMessage("Tous les articles sélectionnés ont été ajoutés au panier.");
+        this.quantities.fill(0);
+      } finally {
+        this.adding = false;
+      }
+    },
+
+    // Affiche un message temporaire de succès
+    showSuccessMessage(message) {
+      this.successMessage = message;
+      setTimeout(() => (this.successMessage = ""), 3000);
+    },
+  },
+  watch: {
+    // Réinitialise les quantités quand les articles changent
+    filteredItems: {
+      handler(newItems) {
+        this.quantities = new Array(newItems.length).fill(0);
+      },
+      immediate: true,
+    },
   },
 };
 </script>
+
+<style scoped>
+.items-list {
+  max-width: 600px;
+  margin: auto;
+}
+</style>
