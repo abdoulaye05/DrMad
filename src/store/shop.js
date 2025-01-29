@@ -28,18 +28,7 @@ const mutations = {
             transactionDate: order.date?.$date || "N/A", // Gérer les cas où transactionDate est absent
         }));
     },
-    addItemToBasket(state, { item, quantity }) {
-        console.log("[Shop] Ajout d'un article :", item.name, "Quantité :", quantity);
 
-        const existingItem = state.basket.items.find((i) => i.item.name === item.name);
-        if (existingItem) {
-            existingItem.quantity += quantity;
-            console.log(`[Shop] Nouvelle quantité pour "${item.name}" : ${existingItem.quantity}`);
-        } else {
-            state.basket.items.push({ item, quantity });
-            console.log(`[Shop] Nouvel article ajouté : "${item.name}", Quantité : ${quantity}`);
-        }
-    },
     removeItemFromBasket(state, itemName) {
         console.log(`[Shop] Suppression de l'article : ${itemName}`);
         const itemIndex = state.basket.items.findIndex((i) => i.item.name === itemName);
@@ -179,26 +168,6 @@ const actions = {
         }
     },
 
-    async createOrder({ commit, state }) {
-        console.log("[Shop] Création d'une commande pour l'utilisateur :", state.shopUser);
-        if (!state.shopUser) {
-            console.error("[Shop] Aucun utilisateur connecté.");
-            return { error: 1, status: 401, data: "Utilisateur non connecté." };
-        }
-        try {
-            const response = await ShopService.createOrder(state.shopUser._id);
-            if (response.error === 0) {
-                commit("updateLastOrder", response.data);
-                console.log("[Shop] Commande créée avec succès :", response.data);
-            } else {
-                console.error("[Shop] Erreur lors de la création de la commande :", response.data);
-            }
-            return response;
-        } catch (err) {
-            console.error("[Shop] Erreur réseau lors de la création de la commande :", err);
-            return { error: 1, status: 500, data: "Erreur réseau, impossible de créer la commande." };
-        }
-    },
 
     async getOrders({ commit, state }) {
         console.log("[Shop] Récupération des commandes pour l'utilisateur :", state.shopUser);

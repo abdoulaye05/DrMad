@@ -1,24 +1,20 @@
 <template>
   <v-card class="items-list pa-4">
-    <v-card-title class="headline">Articles Disponibles</v-card-title>
-    <v-divider></v-divider>
+    <v-divider class="mb-4"></v-divider>
 
-    <!-- Liste des articles -->
+    <!-- Liste des articles filtrés et triés -->
     <v-list dense>
-      <v-list-item v-for="(item, index) in items" :key="item._id" class="pa-2">
+      <v-list-item v-for="(item, index) in filteredItems" :key="item._id" class="pa-2">
         <!-- Informations sur l'article -->
         <v-list-item-content>
           <v-list-item-title>{{ item.name }}</v-list-item-title>
           <v-list-item-subtitle>
-            Prix : {{ item.price }}€
-            <br />
-            Stock : {{ item.stock }}
-            <br />
+            Prix : {{ item.price }}€<br />
+            Stock : {{ item.stock }}<br />
             Promotions :
             <ul v-if="item.promotion.length > 0">
-              <!-- Afficher chaque promotion -->
               <li v-for="promo in item.promotion" :key="promo._id">
-                {{ promo.discount }}% pour {{ promo.amount }} unités
+                {{ promo.discount }}% dès {{ promo.amount }} unités
               </li>
             </ul>
             <span v-else>Aucune promotion</span>
@@ -31,8 +27,7 @@
             label="Quantité"
             type="number"
             min="0"
-            dense
-            outlined
+            dense outlined
             class="mr-2"
             style="max-width: 100px;"
             :disabled="item.stock === 0"
@@ -48,12 +43,7 @@
         </v-btn>
 
         <!-- Indicateur d'épuisement -->
-        <v-chip
-            v-if="item.stock === 0"
-            color="error"
-            outlined
-            class="ml-2"
-        >
+        <v-chip v-if="item.stock === 0" color="error" outlined class="ml-2">
           Épuisé
         </v-chip>
       </v-list-item>
@@ -83,25 +73,49 @@ import { mapState, mapActions } from "vuex";
 
 export default {
   name: "ItemsList",
+  props: {
+    filterKeyword: String,
+    sortBy: String,
+    showInStockOnly: Boolean,
+  },
   data() {
     return {
       quantities: [], // Quantités par article
-      successMessage: "", // Message de confirmation pour l'utilisateur
-      adding: false, // Empêche les actions multiples simultanées
+      successMessage: "", // Message de confirmation
+      adding: false, // Pour éviter plusieurs clics rapides
     };
   },
   computed: {
     ...mapState("shop", ["viruses"]),
-    items() {
-      return this.viruses.map((item) => ({
-        ...item,
-        promotion: this.parsePromotion(item.promotion), // Traitement des promotions
-      }));
-    },
-    canAddAll() {
-      return this.quantities.some((qty, index) =>
-          this.isValidQuantity(qty, this.items[index]?.stock)
-      );
+
+    filteredItems() {
+      let items = [...this.viruses];
+
+      // 🔍 Filtrage par mot-clé
+      if (this.filterKeyword) {
+        const keyword = this.filterKeyword.toLowerCase();
+        items = items.filter((item) => item.name.toLowerCase().includes(keyword));
+      }
+
+      // 📦 Filtrage par stock disponible
+      if (this.showInStockOnly) {
+        items = items.filter((item) => item.stock > 0);
+      }
+
+      // 🔽 Tri des résultats
+      if (this.sortBy) {
+        const sortingMethods = {
+          nameAsc: (a, b) => a.name.localeCompare(b.name),
+          nameDesc: (a, b) => b.name.localeCompare(a.name),
+          priceAsc: (a, b) => a.price - b.price,
+          priceDesc: (a, b) => b.price - a.price,
+          stockAsc: (a, b) => a.stock - b.stock,
+          stockDesc: (a, b) => b.stock - a.stock,
+        };
+        items.sort(sortingMethods[this.sortBy]);
+      }
+
+      return items;
     },
   },
   methods: {
@@ -111,71 +125,17 @@ export default {
       return quantity > 0 && quantity <= stock && Number.isInteger(quantity);
     },
 
-    parsePromotion(promotion) {
-      try {
-        if (Array.isArray(promotion)) return promotion;
-        if (typeof promotion === "string") return JSON.parse(promotion);
-      } catch (error) {
-        console.warn("Promotion non valide :", promotion, error);
-      }
-      return []; // Retourne un tableau vide en cas d'erreur
-    },
-
     async handleAddToBasket(item, quantity, index) {
       if (this.adding || !this.isValidQuantity(quantity, item.stock)) return;
       this.adding = true;
       try {
-        const response = await this.addToBasket({ item, quantity });
-        if (response?.error === 0) {
-          this.showSuccessMessage(`Ajouté ${quantity} de ${item.name} au panier.`);
-          this.quantities[index] = 0;
-        } else {
-          alert(`Erreur : ${response?.data || "Impossible d'ajouter au panier."}`);
-        }
+        await this.addToBasket({ item, quantity });
+        this.showSuccessMessage(`Ajouté ${quantity} de ${item.name} au panier.`);
+        this.quantities[index] = 0;
       } finally {
         this.adding = false;
       }
-    },
-
-    async handleAddAllToBasket() {
-      if (this.adding) return;
-      this.adding = true;
-      try {
-        const selectedItems = this.items
-            .map((item, index) => ({
-              item,
-              quantity: this.quantities[index] || 0,
-            }))
-            .filter(({ item, quantity }) => this.isValidQuantity(quantity, item.stock));
-        for (const { item, quantity } of selectedItems) {
-          await this.addToBasket({ item, quantity });
-        }
-        this.showSuccessMessage("Tous les articles ont été ajoutés.");
-      } finally {
-        this.adding = false;
-      }
-    },
-
-    showSuccessMessage(message) {
-      this.successMessage = message;
-      setTimeout(() => (this.successMessage = ""), 3000);
-    },
-  },
-
-  watch: {
-    items: {
-      handler() {
-        this.quantities = new Array(this.items.length).fill(0);
-      },
-      immediate: true,
     },
   },
 };
 </script>
-
-<style scoped>
-.items-list {
-  max-width: 600px;
-  margin: auto;
-}
-</style>

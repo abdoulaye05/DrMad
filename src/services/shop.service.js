@@ -24,35 +24,30 @@ async function shopLogin(data) {
 
 
 async function getAllViruses() {
-  console.log("[ShopService] Récupération des articles disponibles...");
+  console.log("[ShopService] 🦠 Récupération des articles disponibles...");
+
   try {
     const response = await LocalSource.getItems();
-    console.log("[ShopService] Réponse reçue de getItems :", response);
+    if (response.error !== 0) return response;
 
-    if (response.error === 0) {
-      const parsedData = response.data.map((item) => {
-        let promotion = [];
-        try {
-          if (Array.isArray(item.promotion)) {
-            promotion = item.promotion;
-          } else if (typeof item.promotion === "string") {
-            promotion = JSON.parse(item.promotion);
+    response.data = response.data.map((item) => ({
+      ...item,
+      promotion: (() => {
+        if (Array.isArray(item.promotion)) return item.promotion;
+        if (typeof item.promotion === "string") {
+          try {
+            return JSON.parse(item.promotion);
+          } catch {
+            console.warn(`[ShopService] ⚠️ Erreur JSON pour "${item.name}".`);
           }
-        } catch (error) {
-          console.warn(`[ShopService] Promotion mal formée pour "${item.name}" :`, error.message);
         }
-        return { ...item, promotion: Array.isArray(promotion) ? promotion : [] };
-      });
+        return [];
+      })(),
+    }));
 
-      console.log("[ShopService] Articles avec promotions traitées :", parsedData);
-      response.data = parsedData;
-    }
-
-    return response.error === 0
-        ? response
-        : { error: 1, status: response.status, data: response.data };
+    return response;
   } catch (err) {
-    console.error("[ShopService] Erreur réseau lors de la récupération des articles :", err.message);
+    console.error("[ShopService] ❌ Erreur réseau :", err.message);
     return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer les articles." };
   }
 }
@@ -67,6 +62,7 @@ async function getOrders(userId) {
       response.data = response.data.map((order) => ({
         ...order,
         total: order.total || 0,
+        orderDate: order.date?.$date || "N/A",
         transactionDate: order.date?.$date || "N/A", //
       }));
       console.log("[ShopService] Commandes formatées avec succès :", response.data);
@@ -170,36 +166,61 @@ async function createOrder(userId) {
 }
 
 async function getOrder(uuid) {
-  console.log(`[ShopService] Récupération de la commande UUID : ${uuid}`);
+  console.log(`[ShopService] 🔍 Récupération de la commande UUID : ${uuid}`);
+
   try {
     const response = await LocalSource.getOrder(uuid);
-    console.log("[ShopService] Réponse reçue de getOrder :", response);
-    return response.error === 0
-        ? response
-        : { error: 1, status: response.status, data: response.data };
+    console.log("[ShopService] ✅ Réponse reçue de getOrder :", response);
+
+    if (response.error === 0 && response.data) {
+      return {
+        error: 0,
+        status: response.status,
+        data: {
+          ...response.data,
+          orderDate: response.data.date?.$date || "N/A", // ✅ Ajout de la date de commande
+          transactionDate: response.data.transactionDate?.$date || "N/A", // ✅ Ajout de la date de transaction
+        },
+      };
+    }
+
+    return { error: 1, status: response.status, data: response.data || "Commande introuvable." };
+
   } catch (err) {
-    console.error("[ShopService] Erreur réseau lors de la récupération de la commande :", err.message);
+    console.error("[ShopService] ❌ Erreur réseau lors de la récupération de la commande :", err.message);
     return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer la commande." };
   }
 }
 
-async function payOrder(orderId, transactionUuid) {
-  console.log("[ShopService] Paiement de la commande :", orderId, "avec transactionUuid :", transactionUuid);
+
+async function payOrder(orderUuid, transactionUuid) {
+  console.log(`[ShopService] 💳 Paiement de la commande UUID : ${orderUuid} avec transaction UUID : ${transactionUuid}`);
+
   try {
-    const response = await LocalSource.payOrder(orderId, transactionUuid);
-    console.log("[ShopService] Réponse reçue de payOrder :", response);
+    const response = await LocalSource.payOrder({ orderUuid, transactionUuid }); // ✅ Correction : envoi sous forme d'objet
+    console.log("[ShopService] ✅ Réponse reçue de payOrder :", response);
 
     if (response.error === 0) {
-      console.log(`[ShopService] Commande "${orderId}" payée avec succès.`);
-    } else {
-      console.warn(`[ShopService] Erreur lors du paiement de la commande "${orderId}" :`, response.data);
+      console.log(`[ShopService] 🎉 Commande "${orderUuid}" payée avec succès.`);
+
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          transactionDate: new Date().toISOString(), // ✅ Ajout de la date de transaction
+        },
+      };
     }
+
+    console.warn(`[ShopService] ⚠️ Erreur lors du paiement de la commande "${orderUuid}" :`, response.data);
     return response;
+
   } catch (err) {
-    console.error("[ShopService] Erreur réseau lors du paiement :", err.message);
+    console.error("[ShopService] ❌ Erreur réseau lors du paiement :", err.message);
     return { error: 1, status: 500, data: "Erreur réseau, impossible de payer la commande." };
   }
 }
+
 
 async function cancelOrder(uuid) {
   console.log(`[ShopService] Annulation de la commande UUID : ${uuid}`);
