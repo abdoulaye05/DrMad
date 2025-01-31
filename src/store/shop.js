@@ -68,18 +68,29 @@ const actions = {
     },
 
     async getAllViruses({ commit }) {
-        console.log("[Shop] Récupération des articles disponibles...");
         try {
             const response = await ShopService.getAllViruses();
             if (response.error === 0) {
-                commit("updateViruses", response.data);
-                console.log("[Shop] Articles récupérés avec succès :", response.data);
-            } else {
-                console.error("[Shop] Erreur lors de la récupération des articles :", response.data);
+                const formattedViruses = response.data.map((item) => ({
+                    ...item,
+                    promotion: (() => {
+                        if (Array.isArray(item.promotion)) return item.promotion;
+                        if (typeof item.promotion === "string") {
+                            try {
+                                return JSON.parse(item.promotion);
+                            } catch {
+                                console.warn(`⚠️ Erreur JSON pour "${item.name}".`);
+                            }
+                        }
+                        return [];
+                    })(),
+                }));
+
+                commit("updateViruses", formattedViruses);
             }
             return response;
         } catch (err) {
-            console.error("[Shop] Erreur réseau lors de la récupération des articles :", err);
+            console.error("Erreur réseau lors de la récupération des articles :", err);
             return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer les articles." };
         }
     },
