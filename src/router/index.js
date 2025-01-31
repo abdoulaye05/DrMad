@@ -15,6 +15,7 @@ import BankLogout from '@/views/BankLogout.vue';
 import ShopVirus from '@/views/ShopVirus.vue';
 import BankAccountView from '@/views/BankAccountView.vue';
 
+
 Vue.use(VueRouter);
 
 const routes = [

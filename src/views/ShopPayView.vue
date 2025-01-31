@@ -10,9 +10,7 @@
           <br />
           Montant total : <strong>{{ order.total.toFixed(2) }} €</strong>
           <br />
-          <span v-if="order.transactionDate">
-            Date de Transaction : <strong>{{ formatDate(order.transactionDate) }}</strong>
-          </span>
+          Date de Commande : <strong>{{ formatDate(order.createdAt) }}</strong>
         </p>
         <p v-else class="text-center text-danger mt-2">
           Commande introuvable ou chargement en cours...
@@ -82,14 +80,11 @@ export default {
         const response = await this.getOrder(this.uuid);
         if (response.error === 0) {
           this.order = response.data;
-          console.log("[ShopPay] Commande chargée avec succès :", this.order);
         } else {
           this.errorMessage = "Erreur lors du chargement de la commande.";
-          console.error("[ShopPay] Erreur de chargement :", response);
         }
       } catch (error) {
         this.errorMessage = "Erreur réseau lors du chargement de la commande.";
-        console.error("[ShopPay] Erreur réseau :", error);
       }
     },
 
@@ -99,7 +94,6 @@ export default {
         return;
       }
 
-      console.log(`[ShopPay] Paiement de la commande n° ${this.order.uuid} avec UUID de transaction : ${this.transactionId}`);
       this.isPaying = true;
       this.successMessage = "";
       this.errorMessage = "";
@@ -110,12 +104,8 @@ export default {
           transactionId: this.transactionId,
         });
 
-        console.log("[ShopPay] Réponse reçue :", response);
-
         if (response.error === 0) {
-          this.order.transactionDate = response.data.transactionDate || new Date(); // Ajout de la date
           this.successMessage = `Paiement effectué avec succès pour la commande n° ${this.order.uuid}.`;
-          console.log("[ShopPay] Paiement réussi :", response.data);
 
           // Redirection vers la page des commandes après le succès
           setTimeout(() => {
@@ -123,11 +113,9 @@ export default {
           }, 1500);
         } else {
           this.errorMessage = response.data || "Erreur lors du paiement.";
-          console.error("[ShopPay] Erreur lors du paiement :", response);
         }
       } catch (error) {
         this.errorMessage = "Une erreur réseau s'est produite. Veuillez réessayer.";
-        console.error("[ShopPay] Erreur réseau lors du paiement :", error);
       } finally {
         this.isPaying = false;
       }
@@ -145,7 +133,6 @@ export default {
     },
   },
   async created() {
-    // Charger la commande dès que le composant est monté
     await this.loadOrder();
   },
 };

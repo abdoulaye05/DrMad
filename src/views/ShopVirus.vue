@@ -15,39 +15,32 @@
           class="mt-4"
       ></v-text-field>
 
-      <!-- Bouton Ajouter un nouveau virus -->
-      <v-btn color="success" class="mt-2" @click="showAddVirusDialog = true">
-        <v-icon left>mdi-plus</v-icon> Ajouter un Virus
-      </v-btn>
-
       <!-- Liste des virus -->
       <v-list dense class="mt-4">
-        <v-list-item v-for="virus in filteredViruses" :key="virus._id">
+        <v-list-item v-for="virus in filteredViruses" :key="virus._id" class="pa-3">
           <v-list-item-content>
-            <v-list-item-title>{{ virus.name }}</v-list-item-title>
+            <v-list-item-title class="text-bold">
+              {{ virus.name }}
+            </v-list-item-title>
             <v-list-item-subtitle>
-              Prix : {{ virus.price }}€ | Stock : {{ virus.stock }}
+              Prix : <strong>{{ virus.price }}€</strong> | Stock : <strong>{{ virus.stock }}</strong>
             </v-list-item-subtitle>
           </v-list-item-content>
 
-          <!-- Bouton Voir Détails -->
-          <v-btn icon @click="openDetails(virus)">
-            <v-icon color="info">mdi-information</v-icon>
-          </v-btn>
-
-          <!-- Bouton Ajouter au panier -->
+          <!-- Nouveau bouton "Détails" stylé -->
           <v-btn
-              color="primary"
-              @click="addToBasket(virus)"
-              :disabled="virus.stock === 0"
+              color="info"
+              outlined
+              @click="openDetails(virus)"
+              class="mt-2"
           >
-            Ajouter
+            <v-icon left>mdi-information</v-icon> Détails
           </v-btn>
         </v-list-item>
       </v-list>
     </v-card>
 
-    <!-- Fenêtre de détails du virus -->
+    <!-- Fenêtre de détails -->
     <v-dialog v-model="showDetails" max-width="600px">
       <v-card>
         <v-card-title>
@@ -82,50 +75,15 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-
-    <!-- Fenêtre d'ajout d'un nouveau virus -->
-    <v-dialog v-model="showAddVirusDialog" max-width="500px">
-      <v-card>
-        <v-card-title>
-          Ajouter un Virus
-          <v-spacer></v-spacer>
-          <v-btn icon @click="showAddVirusDialog = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-card-title>
-        <v-divider></v-divider>
-        <v-card-text>
-          <v-text-field
-              v-model="newVirus.name"
-              label="Nom du virus"
-              outlined dense
-          ></v-text-field>
-          <v-text-field
-              v-model.number="newVirus.price"
-              label="Prix (€)"
-              type="number"
-              outlined dense
-          ></v-text-field>
-          <v-text-field
-              v-model.number="newVirus.stock"
-              label="Stock"
-              type="number"
-              outlined dense
-          ></v-text-field>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn color="green" @click="addNewVirus">
-            <v-icon left>mdi-check</v-icon> Ajouter
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
   </v-container>
 </template>
 
+---
+
+### 🔧 **Script (logique de base) :**
+```javascript
 <script>
-import { mapState, mapActions } from "vuex";
+import { mapState } from "vuex";
 
 export default {
   name: "ShopVirus",
@@ -134,12 +92,6 @@ export default {
       filterKeyword: "",
       showDetails: false,
       selectedVirus: null,
-      showAddVirusDialog: false,
-      newVirus: {
-        name: "",
-        price: 0,
-        stock: 0,
-      },
     };
   },
   computed: {
@@ -152,32 +104,9 @@ export default {
     },
   },
   methods: {
-    ...mapActions("shop", ["addToBasket", "addVirusToStore"]),
-
     openDetails(virus) {
       this.selectedVirus = virus;
       this.showDetails = true;
-    },
-
-    async addNewVirus() {
-      if (!this.newVirus.name || this.newVirus.price <= 0 || this.newVirus.stock < 0) {
-        alert("Veuillez remplir correctement tous les champs !");
-        return;
-      }
-
-      const newVirusData = {
-        _id: Math.random().toString(36).substr(2, 9), // Générer un ID temporaire
-        name: this.newVirus.name,
-        price: this.newVirus.price,
-        stock: this.newVirus.stock,
-        description: "Nouveau virus ajouté",
-        promotion: [],
-        links: [],
-      };
-
-      await this.addVirusToStore(newVirusData);
-      this.showAddVirusDialog = false;
-      this.newVirus = { name: "", price: 0, stock: 0 };
     },
   },
   mounted() {
@@ -185,9 +114,24 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 .headline {
   color: #7b241c;
+}
+
+.v-list-item {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.v-list-item-title {
+  font-weight: bold;
+  color: #4a4a4a;
+}
+
+.v-btn {
+  width: 140px;
+  font-weight: bold;
 }
 </style>

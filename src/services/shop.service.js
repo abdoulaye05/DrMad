@@ -24,32 +24,14 @@ async function shopLogin(data) {
 
 async function getAllViruses() {
   console.log("[ShopService] 🦠 Récupération des articles disponibles...");
-
   try {
-    const response = await LocalSource.getItems();
-    if (response.error !== 0) return response;
-
-    response.data = response.data.map((item) => ({
-      ...item,
-      promotion: (() => {
-        if (Array.isArray(item.promotion)) return item.promotion;
-        if (typeof item.promotion === "string") {
-          try {
-            return JSON.parse(item.promotion);
-          } catch {
-            console.warn(`[ShopService] ⚠️ Erreur JSON pour "${item.name}".`);
-          }
-        }
-        return [];
-      })(),
-    }));
-
-    return response;
+    return await LocalSource.getItems(); // 🔥 Pas de transformation ici !
   } catch (err) {
     console.error("[ShopService] ❌ Erreur réseau :", err.message);
     return { error: 1, status: 500, data: "Erreur réseau, impossible de récupérer les articles." };
   }
 }
+
 
 async function getOrders(userId) {
   console.log("[ShopService] Récupération des commandes pour userId :", userId);
