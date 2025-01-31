@@ -1,0 +1,53 @@
+Ici on voit l'architecture du projet :
+src/
+├── assets/
+│   ├── logo1.png
+│   ├── logo1.svg
+├── components/
+│   ├── Bank/
+│   │   ├── BankAccountInfo.vue
+│   │   ├── BankPayementForm.vue
+│   │   ├── BankTransactionList.vue
+│   │   ├── BankWithdrawForm.vue
+│   ├── BankView.vue
+│   ├── BasketList.vue
+│   ├── CheckedList.vue
+│   ├── ItemsList.vue
+│   ├── NavBar.vue
+│   ├── VerticalMenu.vue
+├── datasource/
+│   ├── controller.js
+│   ├── data.js
+├── plugins/
+│   ├── vuetify.js
+├── router/
+│   ├── index.js
+├── services/
+│   ├── bankaccount.service.js
+│   ├── data.service.js
+│   ├── persos.service.js
+│   ├── shop.service.js
+│   ├── towns.service.js
+├── store/
+│   ├── bank.js
+│   ├── index.js
+│   ├── shop.js
+├── views/
+│   ├── BankAccountView.vue
+│   ├── BankAmount.vue
+│   ├── BankHistory.vue
+│   ├── BankHome.vue
+│   ├── BankLogout.vue
+│   ├── BankOperation.vue
+│   ├── BankView.vue
+│   ├── HomePage.vue
+│   ├── ShopBuy.vue
+│   ├── ShopHome.vue
+│   ├── ShopLogin.vue
+│   ├── ShopOrders.vue
+│   ├── ShopPay.vue
+│   ├── ShopView.vue
+│   ├── ShopWVirus.vue
+│   ├── VirusesView.vue
+├── App.vue
+└── main.js
