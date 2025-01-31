@@ -18,7 +18,7 @@
 
     <!-- Boutons de navigation pour tous les utilisateurs -->
     <v-btn text :to="{ name: 'bankaccount' }" exact>
-      <v-icon left>mdi-store</v-icon> Bank Account
+      <v-icon left>mdi-store</v-icon> Bank
     </v-btn>
 
     <!-- Boutons supplémentaires pour utilisateurs connectés -->
