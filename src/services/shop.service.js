@@ -22,7 +22,6 @@ async function shopLogin(data) {
   }
 }
 
-
 async function getAllViruses() {
   console.log("[ShopService] 🦠 Récupération des articles disponibles...");
 
@@ -192,7 +191,6 @@ async function getOrder(uuid) {
   }
 }
 
-
 async function payOrder(orderUuid, transactionUuid) {
   console.log(`[ShopService] 💳 Paiement de la commande UUID : ${orderUuid} avec transaction UUID : ${transactionUuid}`);
 
@@ -220,7 +218,6 @@ async function payOrder(orderUuid, transactionUuid) {
     return { error: 1, status: 500, data: "Erreur réseau, impossible de payer la commande." };
   }
 }
-
 
 async function cancelOrder(uuid) {
   console.log(`[ShopService] Annulation de la commande UUID : ${uuid}`);

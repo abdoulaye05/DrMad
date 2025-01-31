@@ -1,7 +1,6 @@
 <template>
   <div>
-    <h1>Bank History</h1>
-
+    <h1>Histoire de la Banque</h1>
 
     <!--  Filter Section-->
     <div>
@@ -21,14 +20,14 @@
 
       <!-- Amount Filters -->
       <div class="filter-amount">
-        <label>Minimum amount:</label>
+        <label>Montant minimum : </label>
         <input
             type="number"
             v-model="minAmount"
             @input="filterTransactions"
             placeholder="Minimum amount"
         />
-        <label>Maximum amount:</label>
+        <label>Montant maximum : </label>
         <input
             type="number"
             v-model="maxAmount"
@@ -92,23 +91,23 @@
 
 <script>
 
-/*
-import DataTable from "@/components/DataTable";
-*/
 import {mapState} from "vuex";
+/*
+import DataTable from "@/components/DataTable.vue";
+*/
 
 export default {
   name: "BankHistory",
-  /*
-    components: {DataTable},
-  */
+/*
+  components: {DataTable},
+*/
   data() {
     return {
       filterActive: false,
-      startDate: "",
-      endDate: "",
-      minAmount: null, // montant minimum de transaction
-      maxAmount: null, // montant maximum de transaction
+      startDate: null,
+      endDate: null,
+      minAmount: null,
+      maxAmount: null,
       transactionType: "",
     };
   },

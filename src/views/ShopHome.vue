@@ -17,7 +17,7 @@
     </v-app-bar>
 
     <v-container class="d-flex justify-center align-center" style="min-height: 70vh;">
-      <div v-if="currentPage === 'home'">
+      <div v-if="currentPage === 'shophome'">
         <v-img
             src="@/assets/logo1.png"
             alt="DrMad Logo"
@@ -35,7 +35,7 @@ export default {
   name: 'ShopHome',
   data() {
     return {
-      currentPage: 'home', // Default page
+      currentPage: 'shophome', // Default page
     };
   },
   methods: {

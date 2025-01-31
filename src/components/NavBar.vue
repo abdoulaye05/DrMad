@@ -3,7 +3,7 @@
     <!-- Titre principal -->
     <v-toolbar-title class="ml-2">
       <!-- Logo cliquable qui redirige vers Shop Home -->
-      <v-btn icon :to="{ name: 'home', }" class="ml-3">
+      <v-btn icon :to="{ name: 'shophome', }" class="ml-3">
         <v-img
             src="@/assets/logo1.png"
             alt="Logo"

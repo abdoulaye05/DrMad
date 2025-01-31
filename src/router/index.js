@@ -20,15 +20,15 @@ Vue.use(VueRouter);
 const routes = [
   // Boutiques
   {
+    path: '/',
+    component: ShopHome,
+    name: 'shophome',
+  },
+  {
     path: '/shop',
     component: ShopView,
     alias: '',
     children: [
-      {
-        path: 'home',
-        component: ShopHome,
-        name: 'shophome',
-      },
       {
         path: 'login',
         component: ShopLoginView,
