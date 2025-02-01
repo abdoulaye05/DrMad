@@ -26,6 +26,12 @@ export default {
       transactions: { type: Array, required: false, default: () => [] },
       currentView: { type: String, required: false, default: "BankTransactionList" },
   },
+  methods: {
+    loadAccountInfo() {
+      console.log("🔄 Rafraîchissement des infos du compte...");
+      this.$emit("refresh"); // Émet l'événement pour que le parent puisse le traiter si besoin
+    },
+  },
 };
 
 </script>

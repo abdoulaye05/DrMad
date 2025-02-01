@@ -4,19 +4,30 @@
       <v-card-title class="text-h5 text-center">Paiement de la Commande</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <!-- Message avec l'UUID et le total de la commande -->
+        <!-- Champ facultatif pour l'UUID de la commande -->
+        <v-text-field
+            v-model="orderUuid"
+            label="UUID de la commande (facultatif)"
+            outlined
+            dense
+            class="mt-2"
+            prepend-inner-icon="mdi-order-bool-descending-variant"
+            @blur="loadOrder"
+        ></v-text-field>
+
+        <!-- Message avec les détails de la commande si trouvée -->
         <p v-if="order" class="text-center mt-2">
           Vous êtes sur le point de payer la commande n° <strong>{{ order.uuid }}</strong>.
           <br />
           Montant total : <strong>{{ order.total.toFixed(2) }} €</strong>
           <br />
-          Date de Commande : <strong>{{ formatDate(order.createdAt) }}</strong>
+          Date de commande : <strong>{{ formatDate(order.createdAt) }}</strong>
         </p>
         <p v-else class="text-center text-danger mt-2">
           Commande introuvable ou chargement en cours...
         </p>
 
-        <!-- Champ pour UUID de transaction bancaire -->
+        <!-- Champ pour l'UUID de la transaction bancaire -->
         <v-text-field
             v-model="transactionId"
             label="UUID de transaction bancaire"
@@ -34,7 +45,7 @@
             class="mt-4"
             @click="handlePayOrder"
             :loading="isPaying"
-            :disabled="isPaying || !order || !transactionId"
+            :disabled="isPaying || !transactionId || !order"
         >
           {{ isPaying ? "Paiement en cours..." : "Payer Maintenant" }}
         </v-btn>
@@ -59,13 +70,14 @@ export default {
   props: {
     uuid: {
       type: String,
-      required: true, // UUID de commande requis
+      default: "", // L'UUID est facultatif
     },
   },
   data() {
     return {
+      orderUuid: "", // UUID local de la commande
       order: null, // Commande récupérée via l'UUID
-      transactionId: "", // UUID de transaction bancaire
+      transactionId: "", // UUID de la transaction bancaire
       isPaying: false, // État de chargement du paiement
       successMessage: "", // Message de succès
       errorMessage: "", // Message d'erreur
@@ -74,20 +86,29 @@ export default {
   methods: {
     ...mapActions("shop", ["getOrder", "payOrder"]),
 
+    // Charger les informations de la commande
     async loadOrder() {
+      if (!this.orderUuid) {
+        this.errorMessage = "Veuillez fournir un UUID de commande.";
+        return;
+      }
+
       try {
         // Rechercher la commande via l'UUID
-        const response = await this.getOrder(this.uuid);
+        const response = await this.getOrder(this.orderUuid);
         if (response.error === 0) {
           this.order = response.data;
+          this.errorMessage = "";
         } else {
-          this.errorMessage = "Erreur lors du chargement de la commande.";
+          this.order = null;
+          this.errorMessage = "Commande introuvable.";
         }
       } catch (error) {
         this.errorMessage = "Erreur réseau lors du chargement de la commande.";
       }
     },
 
+    // Payer la commande
     async handlePayOrder() {
       if (!this.order || !this.transactionId) {
         alert("Veuillez remplir tous les champs !");
@@ -121,6 +142,7 @@ export default {
       }
     },
 
+    // Simple version de la méthode pour formater la date
     formatDate(date) {
       const d = new Date(date);
       return d.toLocaleDateString("fr-FR", {
@@ -133,7 +155,11 @@ export default {
     },
   },
   async created() {
-    await this.loadOrder();
+    // Si un UUID est fourni via les props, initialiser le champ local et charger la commande
+    if (this.uuid) {
+      this.orderUuid = this.uuid;
+      await this.loadOrder();
+    }
   },
 };
 </script>

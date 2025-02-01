@@ -55,7 +55,7 @@ function shopLogin(data) {
 function getItems() {
   const itemsWithPromotions = items.map((item) => ({
     ...item,
-    promotion: Array.isArray(item.promotion) ? item.promotion : [],  // ✅ Corrigé : retourne toutes les promotions
+    promotion: Array.isArray(item.promotion) ? item.promotion : [],
   }));
 
   return { error: 0, status: 200, data: itemsWithPromotions };
@@ -183,6 +183,7 @@ function payOrder({ orderUuid, transactionAmount }) {
   }
 
   order.status = "finalized";
+  order.transactionDate = new Date();
   return { error: 0, status: 200, data: order };
 }
 
@@ -222,12 +223,10 @@ function getOrder(uuid) {
   if (!user) {
     return { error: 1, status: 404, data: "Utilisateur introuvable." };
   }
-
   const order = user.orders.find((o) => o.uuid === uuid);
   if (!order) {
     return { error: 1, status: 404, data: "Commande introuvable." };
   }
-
   return { error: 0, status: 200, data: order };
 }
 

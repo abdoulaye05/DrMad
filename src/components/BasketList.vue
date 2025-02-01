@@ -1,25 +1,36 @@
 <template>
-  <v-card class="basket-list pa-4">
-    <v-card-title class="headline">Mon Panier</v-card-title>
+  <v-card class="basket-list pa-4" elevation="2">
     <v-divider></v-divider>
 
     <!-- Liste des articles dans le panier -->
     <v-list v-if="basket.items && basket.items.length > 0" dense>
-      <v-list-item
-          v-for="(basketItem, index) in basket.items"
-          :key="index"
-          class="pa-2"
-      >
-        <v-list-item-content>
-          <v-list-item-title>{{ basketItem.item.name }}</v-list-item-title>
-          <v-list-item-subtitle>
-            Quantité : {{ basketItem.quantity }} |
-            Prix total : {{ (basketItem.item.price * basketItem.quantity).toFixed(2) }} €
+      <v-list-item v-for="(basketItem, index) in basket.items" :key="index" class="pa-3">
+        <v-card outlined class="pa-3 w-100">
+          <v-row>
+            <v-col cols="8">
+              <v-list-item-title class="font-weight-bold">{{ basketItem.item.name }}</v-list-item-title>
+              <v-list-item-subtitle>
+                Quantité : <strong>{{ basketItem.quantity }}</strong>
+                <br />
+                Prix unitaire : <strong>{{ basketItem.item.price.toFixed(2) }} €</strong>
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-if="getDiscount(basketItem) > 0" class="text-success">
+                ✅ Promotion appliquée : {{ getDiscount(basketItem) }}% de réduction
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-else class="text-info">
+                📌 Pas de promotion
+              </v-list-item-subtitle>
+            </v-col>
+            <v-col cols="4" class="d-flex align-end justify-end">
+              <v-btn color="error" @click="handleRemoveItem(basketItem.item.name)">Supprimer</v-btn>
+            </v-col>
+          </v-row>
+
+          <v-divider class="my-2"></v-divider>
+          <v-list-item-subtitle class="text-right">
+            Prix total (après réduction) : <strong>{{ calculateItemTotal(basketItem).toFixed(2) }} €</strong>
           </v-list-item-subtitle>
-        </v-list-item-content>
-        <v-btn color="error" @click="handleRemoveItem(basketItem.item.name)">
-          Supprimer
-        </v-btn>
+        </v-card>
       </v-list-item>
     </v-list>
 
@@ -28,8 +39,8 @@
 
     <!-- Total du panier -->
     <v-divider class="my-4"></v-divider>
-    <div class="total-price">
-      <strong>Total : {{ calculatedTotal.toFixed(2) }} €</strong>
+    <div class="total-price text-right">
+      <h3><strong>Total: {{ calculatedTotal.toFixed(2) }} €</strong></h3>
     </div>
 
     <!-- Actions globales -->
@@ -63,7 +74,7 @@
 </template>
 
 <script>
-import ShopService from "@/services/shop.service";
+import ShopService from "@/services/shop.service";  // ⚡ Appel direct à l'API
 import { mapState, mapActions } from "vuex";
 
 export default {
@@ -72,34 +83,48 @@ export default {
     return {
       successMessage: "",
       errorMessage: "",
-      isLoading: false, // État de chargement
+      isLoading: false,
     };
   },
   computed: {
     ...mapState("shop", ["basket", "shopUser"]),
+
+    // Calculer le total du panier avec les réductions
     calculatedTotal() {
-      if (!this.basket.items || this.basket.items.length === 0) return 0;
-      return this.basket.items.reduce(
-          (total, item) => total + item.item.price * item.quantity,
-          0
-      );
+      return this.basket.items.reduce((total, item) => total + this.calculateItemTotal(item), 0);
     },
   },
   methods: {
     ...mapActions("shop", ["removeFromBasket", "clearBasket", "loadBasket"]),
 
+    calculateItemTotal(basketItem) {
+      let basePrice = basketItem.item.price;
+      let quantity = basketItem.quantity;
+      let discount = this.getDiscount(basketItem);
+      let discountedPrice = basePrice * (1 - discount / 100);
+      return discountedPrice * quantity;
+    },
+
+    getDiscount(basketItem) {
+      let promotions = basketItem.item.promotion;
+      if (!promotions || promotions.length === 0) return 0;
+
+      let sortedPromotions = [...promotions].sort((a, b) => b.discount - a.discount);
+      for (const promo of sortedPromotions) {
+        if (basketItem.quantity >= promo.amount) {
+          return promo.discount;
+        }
+      }
+      return 0;
+    },
+
     async handleRemoveItem(itemName) {
       this.isLoading = true;
       try {
-        const response = await this.removeFromBasket(itemName);
-        if (response.error === 0) {
-          this.showSuccessMessage(`L'article "${itemName}" a été supprimé.`);
-        } else {
-          this.showErrorMessage("Erreur lors de la suppression de l'article.");
-        }
-      } catch (error) {
-        this.showErrorMessage("Erreur réseau. Veuillez réessayer.");
-        console.error("[BasketList] Erreur réseau lors de la suppression :", error);
+        await this.removeFromBasket(itemName);
+        this.successMessage = `L'article "${itemName}" a été supprimé.`;
+      } catch {
+        this.errorMessage = "Erreur réseau lors de la suppression.";
       } finally {
         this.isLoading = false;
       }
@@ -108,15 +133,10 @@ export default {
     async handleClearBasket() {
       this.isLoading = true;
       try {
-        const response = await this.clearBasket(this.shopUser._id);
-        if (response.error === 0) {
-          this.showSuccessMessage("Le panier a été vidé avec succès !");
-        } else {
-          this.showErrorMessage("Erreur lors du vidage du panier.");
-        }
-      } catch (error) {
-        this.showErrorMessage("Erreur réseau lors du vidage du panier.");
-        console.error("[BasketList] Erreur réseau lors du vidage du panier :", error);
+        await this.clearBasket(this.shopUser._id);
+        this.successMessage = "Le panier a été vidé avec succès.";
+      } catch {
+        this.errorMessage = "Erreur lors du vidage du panier.";
       } finally {
         this.isLoading = false;
       }
@@ -125,55 +145,32 @@ export default {
     async handleProcessOrder() {
       this.isLoading = true;
       try {
-        // Créer l'objet commande à partir du panier
         const order = {
-          items: this.basket.items.map((basketItem) => ({
+          items: this.basket.items.map((item) => ({
             item: {
-              name: basketItem.item.name,
-              price: basketItem.item.price,
+              name: item.item.name,
+              price: item.item.price,
             },
-            quantity: basketItem.quantity,
+            quantity: item.quantity,
           })),
         };
 
+        // ⚡ Appel direct à l'API
         const response = await ShopService.createOrder(this.shopUser._id, order);
-        console.log("[BasketList] Réponse de `createOrder` :", response);
-
-        // Vérifier que l'API retourne un `uuid`
         if (response.error === 0 && response.data?.uuid) {
-          const orderUuid = response.data.uuid;
-
-          // Vider le panier après création de la commande
-          const clearResponse = await this.clearBasket(this.shopUser._id);
-          if (clearResponse.error !== 0) {
-            this.showErrorMessage("Erreur lors du vidage du panier après la commande.");
-            return;
-          }
-
-          // Rediriger vers `ShopPay` avec l'UUID uniquement
+          await this.clearBasket(this.shopUser._id);
           this.successMessage = "Commande validée avec succès !";
           setTimeout(() => {
-            this.$router.push({ name: "shoppay", params: { uuid: orderUuid } });
+            this.$router.push({ name: "shoppay", params: { uuid: response.data.uuid } });
           }, 2000);
         } else {
-          this.showErrorMessage("Erreur ou absence d'UUID dans la réponse de l'API.");
+          this.errorMessage = "Erreur lors de la validation de la commande.";
         }
-      } catch (error) {
-        this.showErrorMessage("Erreur réseau lors de la validation de la commande.");
-        console.error("[BasketList] Erreur lors de la validation de la commande :", error);
+      } catch {
+        this.errorMessage = "Erreur réseau lors de la commande.";
       } finally {
         this.isLoading = false;
       }
-    },
-
-    showSuccessMessage(message) {
-      this.successMessage = message;
-      setTimeout(() => (this.successMessage = ""), 3000);
-    },
-
-    showErrorMessage(message) {
-      this.errorMessage = message;
-      setTimeout(() => (this.errorMessage = ""), 3000);
     },
   },
 
@@ -187,13 +184,28 @@ export default {
 
 <style scoped>
 .basket-list {
-  max-width: 600px;
+  max-width: 700px;
   margin: auto;
 }
 
 .total-price {
-  text-align: right;
-  font-size: 18px;
+  font-size: 20px;
   padding: 1rem 0;
+}
+
+.v-list-item {
+  margin-bottom: 10px;
+}
+
+.v-list-item-title {
+  font-size: 18px;
+}
+
+.text-success {
+  color: green;
+}
+
+.text-info {
+  color: blue;
 }
 </style>

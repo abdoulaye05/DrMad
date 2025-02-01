@@ -28,18 +28,14 @@
             </v-toolbar>
           </template>
 
-          <!-- Colonne Date de Transaction -->
+          <!-- Colonne Date de commande ou de transaction -->
           <template v-slot:[`item.transactionDate`]="{ item }">
-            {{ formatDate(item.transactionDate) }}
+            {{ formatDate(item) }}
           </template>
 
           <!-- Colonne pour le statut -->
           <template v-slot:[`item.status`]="{ item }">
-            <v-chip
-                :color="statusColor(item.status)"
-                text-color="white"
-                small
-            >
+            <v-chip :color="statusColor(item.status)" text-color="white" small>
               {{ formatStatus(item.status) }}
             </v-chip>
           </template>
@@ -82,7 +78,6 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
-import ShopService from "@/services/shop.service"
 
 export default {
   name: "ShopOrders",
@@ -92,7 +87,7 @@ export default {
       headers: [
         { text: "UUID Commande", value: "uuid", align: "start", width: "30%" },
         { text: "Montant Total (€)", value: "total", align: "center", width: "15%" },
-        { text: "Date de Transaction", value: "transactionDate", align: "center", width: "25%" },
+        { text: "Date de commande", value: "transactionDate", align: "center", width: "25%" },
         { text: "Statut", value: "status", align: "center", width: "15%" },
         { text: "Actions", value: "actions", align: "end", sortable: false, width: "15%" },
       ],
@@ -108,9 +103,7 @@ export default {
     ...mapActions("shop", ["getOrders", "payOrder", "cancelOrder"]),
 
     async refreshOrders() {
-      console.log("[ShopOrders] Début de refreshOrders.");
       if (!this.shopUser) {
-        console.error("[ShopOrders] Aucun utilisateur connecté.");
         alert("Veuillez vous connecter pour voir vos commandes.");
         return;
       }
@@ -118,80 +111,44 @@ export default {
       this.isLoading = true;
       try {
         const response = await this.getOrders(this.shopUser._id);
-        console.log("[ShopOrders] Réponse reçue de getOrders :", response);
-
         if (response?.error === 0) {
-          console.log("[ShopOrders] Commandes récupérées avec succès :", response.data);
+          console.log("[ShopOrders] Commandes récupérées avec succès.");
         } else {
-          console.error(
-              "[ShopOrders] Erreur lors de la récupération des commandes :",
-              response?.data || "Réponse invalide."
-          );
           alert("Impossible de récupérer vos commandes.");
         }
       } catch (err) {
-        console.error("[ShopOrders] Erreur inattendue :", err);
+        console.error("[ShopOrders] Erreur réseau :", err);
         alert("Erreur réseau. Veuillez réessayer.");
       } finally {
         this.isLoading = false;
-        console.log("[ShopOrders] Fin de refreshOrders.");
       }
     },
 
     async processPayment(orderUuid) {
-      console.log(`[ShopOrders] Paiement de la commande UUID : ${orderUuid}`);
       if (!orderUuid) {
-        console.error("[ShopOrders] UUID manquant pour le paiement.");
         alert("Erreur : identifiant de commande manquant.");
         return;
       }
 
-      const order = this.orders.find((o) => o.uuid === orderUuid);
-      if (!order) {
-        console.error("[ShopOrders] Commande introuvable pour UUID :", orderUuid);
-        alert("Erreur : commande introuvable.");
-        return;
-      }
-
-      console.log("[ShopOrders] Commande trouvée pour le paiement :", order);
-
-      try {
-        this.$router.push({
-          name: "shoppay",
-          params: {
-            uuid: orderUuid,
-            total: order.total,
-          },
-        });
-        console.log("[ShopOrders] Redirection vers shoppay réussie.");
-      } catch (err) {
-        console.error("[ShopOrders] Erreur lors de la redirection vers ShopPay :", err);
-        alert("Une erreur est survenue lors de la redirection.");
-      }
+      this.$router.push({ name: "shoppay", params: { uuid: orderUuid } });
     },
 
     async cancelOrder(orderUuid) {
-      console.log(`[ShopOrders] Annulation de la commande UUID : ${orderUuid}`);
       if (!orderUuid) {
-        console.error("[ShopOrders] UUID manquant pour l'annulation.");
         alert("Erreur : identifiant de commande manquant.");
         return;
       }
 
       try {
         this.isLoading = true;
-        const response = await ShopService.cancelOrder(orderUuid);
-        console.log("[ShopOrders] Réponse reçue de cancelOrder :", response);
-
+        const response = await this.cancelOrder(orderUuid);
         if (response?.error === 0) {
           alert("Commande annulée avec succès.");
           this.refreshOrders();
         } else {
-          console.error("[ShopOrders] Erreur lors de l'annulation :", response?.data || "Réponse invalide.");
           alert("Erreur lors de l'annulation.");
         }
       } catch (err) {
-        console.error("[ShopOrders] Erreur inattendue lors de l'annulation :", err);
         alert("Erreur réseau. Veuillez réessayer.");
       } finally {
         this.isLoading = false;
@@ -224,22 +181,27 @@ export default {
       }
     },
 
-    formatDate(date) {
-      if (!date || date === "N/A") return "N/A"; // Gérer les dates manquantes
-      const options = {
+    formatDate(order) {
+      const date = order.transactionDate || order.createdAt;
+      if (!date) return "N/A";
+      return new Date(date).toLocaleDateString("fr-FR", {
         year: "numeric",
         month: "short",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      };
-      return new Date(date).toLocaleDateString("fr-FR", options);
+      });
     },
   },
 
   mounted() {
-    console.log("[ShopOrders] Composant monté. Chargement des commandes.");
     this.refreshOrders();
   },
 };
 </script>
+
+<style scoped>
+.v-chip {
+  text-transform: capitalize;
+}
+</style>
