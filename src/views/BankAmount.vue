@@ -1,25 +1,18 @@
 <template>
-  <div>
-    <h1>Bank Amount</h1>
-    <v-slot name="account-amount" :amount="amount">
-      <span :class="amountClass">{{ amount }} €</span>
-    </v-slot>
-  </div>
+  <v-card class="pa-5">
+    <h2>💰 Solde du compte</h2>
+    <p><strong>Numéro de compte :</strong> {{ accountNumber }}</p>
+    <p><strong>Solde actuel :</strong> <span :style="{ color: accountAmount < 0 ? 'red' : 'green' }">{{ accountAmount }} €</span></p>
+  </v-card>
 </template>
 
 <script>
-import { mapState} from "vuex";
+import { mapState } from "vuex";
 
 export default {
   name: "BankAmount",
   computed: {
-    ...mapState("bank", ["currentAccount"]),
-    amount() {
-      return this.currentAccount ? this.currentAccount.amount : 0;
-    },
-    amountClass() {
-      return this.amount >= 0 ? "positive-balance" : "negative-balance";
-    },
+    ...mapState("bank", ["accountNumber", "accountAmount"]),
   },
 };
 </script>

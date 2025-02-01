@@ -1,110 +1,92 @@
 <template>
-  <v-container>
-    <v-card class="pa-5">
-      <v-card-title class="text-h5">Compte Bancaire</v-card-title>
-      <v-card-text>
-        <!-- Input for Account Number -->
-        <v-text-field
-            v-model="number"
-            :disabled="Boolean(accountNumber)"
-            dense
-            label="Numéro de compte"
-            outlined
-            placeholder="Entrer le numéro de compte"
-        ></v-text-field>
+  <v-container class="bank-container">
+    <v-row>
+      <v-col cols="2" v-if="hasActiveBankAccount">
+        <VerticalMenu :items="menuItems" @menu-click="setCurrentView" />
+      </v-col>
 
-        <!-- Load Account Info Button -->
-        <v-btn
-            :disabled="!isAccountNumberValid || Boolean(accountNumber)"
-            class="mr-2"
-            color="red darken-2"
-            @click="loadAccountInfo"
-        >
-          Charger les informations du compte
+      <v-col :cols="hasActiveBankAccount ? 10 : 12">
+        <v-btn v-if="hasActiveBankAccount" color="red" class="mb-3" @click="logout">
+          <v-icon left>mdi-logout</v-icon> Déconnexion
         </v-btn>
 
-        <v-btn
-            v-if="number !== ''"
-            class="ml-2"
-            color="grey darken-1"
-            @click="resetAccount"
-        >
-          Réinitialiser
-        </v-btn>
+        <BankAccountLogin v-if="!hasActiveBankAccount" @account-validated="activateAccount" />
 
-        <!-- Error Message -->
-        <v-alert v-if="!currentAccount && number !== '' && !isAccountNumberValid" dense type="error">
-          Numéro de compte invalide
-        </v-alert>
+        <!-- Affichage des composants dynamiques avec passage des props -->
+        <component v-if="currentView" :is="currentView" :account="currentAccount" />
 
-        <v-divider class="my-4"></v-divider>
-
-        <!-- Dynamic Component -->
-        <component
-            :is="currentView"
-            :account="currentAccount || {}"
-            :transactions="accountTransactions"
-            @refresh="loadAccountInfo"
-        />
-      </v-card-text>
-    </v-card>
+        <v-card v-if="hasActiveBankAccount && !currentView" class="pa-4 account-info-card" elevation="2">
+          <v-row align="center">
+            <v-col>
+              <h2>🏦 Bienvenue dans votre espace bancaire</h2>
+              <p><strong>Numéro de compte :</strong> {{ accountNumber }}</p>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script>
-import {mapActions, mapMutations, mapState} from "vuex";
-import BankAccountInfo from "@/components/Bank/BankAccountInfo.vue";
-import BankWithdrawForm from "@/components/Bank/BankWithdrawForm.vue";
-import BankPayementForm from "@/components/Bank/BankPayementForm.vue";
+import { mapState, mapMutations, mapActions } from "vuex";
+import VerticalMenu from "@/components/VerticalMenu.vue";
+import BankAmount from "@/views/BankAmount.vue";
 import BankTransactionList from "@/components/Bank/BankTransactionList.vue";
+import BankWithdrawForm from "@/components/Bank/BankWithdrawForm.vue";
+import BankAccountLogin from "@/components/Bank/BankAccountLogin.vue";
 
 export default {
   name: "BankAccountView",
   components: {
-    BankAccountInfo,
-    BankWithdrawForm,
-    BankPayementForm,
+    VerticalMenu,
+    BankAmount,
     BankTransactionList,
+    BankWithdrawForm,
+    BankAccountLogin,
   },
-  data: () => ({
-    number: "", // Numéro de compte saisi
-    currentView: "BankAccountInfo", // Default view to display
-  }),
+  data() {
+    return {
+      currentView: null,
+    };
+  },
   computed: {
-    ...mapState("bank", [
-      "accountAmount",
-      "accountTransactions",
-      "accountNumberError",
-      "accountNumber",
-    ]),
-    // Vérification du format du numéro de compte
-    isAccountNumberValid() {
-      const regex = /^[A-Za-z0-9]{22}-[0-9]{7}$/;
-      return regex.test(this.number);
+    ...mapState("bank", ["accountNumber", "accountAmount", "accountTransactions"]),
+    hasActiveBankAccount() {
+      return this.accountNumber !== "";
+    },
+    currentAccount() {
+      return {
+        number: this.accountNumber,
+        amount: this.accountAmount,
+      };
+    },
+    menuItems() {
+      return [
+        { type: "button", label: "Solde", view: "BankAmount", disabled: !this.hasActiveBankAccount },
+        { type: "button", label: "Débit/Virement", view: "BankWithdrawForm", disabled: !this.hasActiveBankAccount },
+        { type: "button", label: "Historique", view: "BankTransactionList", disabled: !this.hasActiveBankAccount },
+      ];
     },
   },
   methods: {
-    ...mapActions("bank", ["getAccountAmount", "getAccountTransactions", "resetAccountNumber"]),
-    ...mapMutations("bank", ["updateAccountNumber", "updateAccountNumberError"]),
+    ...mapMutations("bank", ["updateAccountNumber", "clearCurrentAccount"]),
+    ...mapActions("bank", ["getAccountAmount", "getAccountTransactions"]),
 
-    async loadAccountInfo() {
-      try {
-        if (this.isAccountNumberValid) {
-          await this.getAccountAmount(this.number);
-          this.updateAccountNumber(this.number);
-          if (this.accountAmount > 0) {
-            await this.getAccountTransactions(this.number);
-          }
-          this.currentView = "BankAccountInfo";
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    async activateAccount(accountNumber) {
+      console.log("✅ [BankAccountView] Événement `account-validated` reçu avec :", accountNumber);
+      this.updateAccountNumber(accountNumber);
+      await this.getAccountAmount(accountNumber);
+      await this.getAccountTransactions(accountNumber);
+      console.log("🔍 [BankAccountView] Transactions après activation du compte :", this.accountTransactions);
     },
-    resetAccount() {
-      this.number = "";
-      this.currentView = "BankAccountInfo";
-      this.resetAccountNumber();
+    setCurrentView(view) {
+      this.currentView = view;
+    },
+
+    logout() {
+      this.clearCurrentAccount();
+      this.currentView = null;
     },
   },
 };

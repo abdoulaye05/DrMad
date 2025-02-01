@@ -19,8 +19,17 @@
 </template>
 
 <script>
+import {mapState} from "vuex";
+import BankTransactionList from "@/components/Bank/BankTransactionList.vue";
+
 export default {
   name: "BankAccountInfo",
+  computed: {
+    ...mapState("bank", ["accountNumber", "accountAmount", "accountTransactions"]),
+  },
+  components: {
+    BankTransactionList, // 🔥 Assurez-vous qu'il est bien ajouté ici
+  },
   props: {
       account: { type: Object, required: false, default: () => ({}) },
       transactions: { type: Array, required: false, default: () => [] },
@@ -32,6 +41,8 @@ export default {
       this.$emit("refresh"); // Émet l'événement pour que le parent puisse le traiter si besoin
     },
   },
+
+
 };
 
 </script>
