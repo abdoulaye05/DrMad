@@ -1,92 +1,97 @@
 <template>
-  <v-container class="bank-container">
-    <v-row>
-      <v-col cols="2" v-if="hasActiveBankAccount">
-        <VerticalMenu :items="menuItems" @menu-click="setCurrentView" />
-      </v-col>
+  <v-container class="fill-height d-flex align-center justify-center">
+    <v-card class="pa-5 mx-auto" elevation="3" max-width="650">
+      <!-- 🔹 Titre -->
+      <v-card-title class="justify-center">
+        <h2>🏦 Connexion à votre Compte Bancaire</h2>
+      </v-card-title>
 
-      <v-col :cols="hasActiveBankAccount ? 10 : 12">
-        <v-btn v-if="hasActiveBankAccount" color="red" class="mb-3" @click="logout">
-          <v-icon left>mdi-logout</v-icon> Déconnexion
-        </v-btn>
+      <v-divider class="my-3"></v-divider>
 
-        <BankAccountLogin v-if="!hasActiveBankAccount" @account-validated="activateAccount" />
+      <!-- 🔹 Champ de saisie du numéro de compte -->
+      <v-text-field
+          label="Numéro de compte"
+          v-model="number"
+          placeholder="Entrez votre numéro de compte"
+          :disabled="!!currentAccount"
+          outlined
+          dense
+      />
 
-        <!-- Affichage des composants dynamiques avec passage des props -->
-        <component v-if="currentView" :is="currentView" :account="currentAccount" />
+      <!-- 🔹 Message d'erreur -->
+      <v-alert v-if="errorMessage" type="error" dense class="my-2">
+        {{ errorMessage }}
+      </v-alert>
 
-        <v-card v-if="hasActiveBankAccount && !currentView" class="pa-4 account-info-card" elevation="2">
-          <v-row align="center">
-            <v-col>
-              <h2>🏦 Bienvenue dans votre espace bancaire</h2>
-              <p><strong>Numéro de compte :</strong> {{ accountNumber }}</p>
-            </v-col>
-          </v-row>
-        </v-card>
-      </v-col>
-    </v-row>
+      <!-- 🔹 Boutons Connexion & Réinitialiser -->
+      <v-row>
+        <v-col cols="6">
+          <v-btn
+              color="primary"
+              :disabled="!isAccountNumberValid || currentAccount"
+              @click="loadAccountInfo"
+              block
+          >
+            <v-icon left>mdi-login</v-icon> Connexion
+          </v-btn>
+        </v-col>
+        <v-col cols="6">
+          <v-btn color="warning" @click="resetAccount" block>
+            <v-icon left>mdi-refresh</v-icon> Réinitialiser
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card>
   </v-container>
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions } from "vuex";
-import VerticalMenu from "@/components/VerticalMenu.vue";
-import BankAmount from "@/views/BankAmount.vue";
-import BankTransactionList from "@/components/Bank/BankTransactionList.vue";
-import BankWithdrawForm from "@/components/Bank/BankWithdrawForm.vue";
-import BankAccountLogin from "@/components/Bank/BankAccountLogin.vue";
+import { mapState, mapActions, mapMutations } from "vuex";
 
 export default {
   name: "BankAccountView",
-  components: {
-    VerticalMenu,
-    BankAmount,
-    BankTransactionList,
-    BankWithdrawForm,
-    BankAccountLogin,
-  },
   data() {
     return {
-      currentView: null,
+      number: "",
+      errorMessage: "",
     };
   },
   computed: {
-    ...mapState("bank", ["accountNumber", "accountAmount", "accountTransactions"]),
-    hasActiveBankAccount() {
-      return this.accountNumber !== "";
-    },
-    currentAccount() {
-      return {
-        number: this.accountNumber,
-        amount: this.accountAmount,
-      };
-    },
-    menuItems() {
-      return [
-        { type: "button", label: "Solde", view: "BankAmount", disabled: !this.hasActiveBankAccount },
-        { type: "button", label: "Débit/Virement", view: "BankWithdrawForm", disabled: !this.hasActiveBankAccount },
-        { type: "button", label: "Historique", view: "BankTransactionList", disabled: !this.hasActiveBankAccount },
-      ];
+    ...mapState("bank", ["currentAccount"]),
+
+    isAccountNumberValid() {
+      const regex = /^[A-Za-z0-9]{22}-[0-9]{7}$/;
+      return regex.test(this.number.trim());
     },
   },
   methods: {
-    ...mapMutations("bank", ["updateAccountNumber", "clearCurrentAccount"]),
-    ...mapActions("bank", ["getAccountAmount", "getAccountTransactions"]),
+    ...mapActions("bank", ["getAccount"]),
+    ...mapMutations("bank", ["clearCurrentAccount"]),
 
-    async activateAccount(accountNumber) {
-      console.log("✅ [BankAccountView] Événement `account-validated` reçu avec :", accountNumber);
-      this.updateAccountNumber(accountNumber);
-      await this.getAccountAmount(accountNumber);
-      await this.getAccountTransactions(accountNumber);
-      console.log("🔍 [BankAccountView] Transactions après activation du compte :", this.accountTransactions);
-    },
-    setCurrentView(view) {
-      this.currentView = view;
+    async loadAccountInfo() {
+      this.errorMessage = "";
+      if (!this.isAccountNumberValid) {
+        this.errorMessage = "⚠️ Numéro de compte invalide.";
+        return;
+      }
+
+      try {
+        await this.getAccount(this.number.trim());
+        if (this.currentAccount) {
+          this.$router.push("/bank/amount"); // Redirection vers solde
+        } else {
+          this.errorMessage = "⚠️ Aucun compte trouvé.";
+        }
+      } catch (error) {
+        this.errorMessage = "❌ Erreur de connexion.";
+      }
     },
 
-    logout() {
+    resetAccount() {
+      this.number = "";
+      this.errorMessage = "";
       this.clearCurrentAccount();
-      this.currentView = null;
+      window.location.reload();
     },
   },
 };

@@ -1,115 +1,123 @@
 <template>
-  <div>
-    <h1>Bank Operation</h1>
+  <v-container>
+    <v-card class="pa-4" elevation="2">
+      <v-card-title class="justify-center">💸 Débit / Virement</v-card-title>
 
-    <!--  montant Input-->
-    <div class="form-group">
-      <label for="montant">Montant :</label>
-      <input
-          type="number"
-          id="montant"
-          v-model="montant"
-          placeholder="Entrez le montant"
-          min="0.01"
-      />
-    </div>
+      <v-divider class="my-3"></v-divider>
 
-    <!-- Checkbox for destinataire -->
-    <div class="form-group">
-      <input type="checkbox" id="hasDestinataire" v-model="hasDestinataire"/>
-      <label for="hasDestinataire">Destinataire</label>
-    </div>
+      <v-card-text>
+        <!-- Inclut BankWithdrawForm pour la gestion des retraits -->
+        <BankWithdrawForm v-if="!hasDestinataire" :account="currentAccount" />
 
-    <!-- destinataire Input -->
-    <div class="form-group" v-if="hasDestinataire">
-      <label for="destinataire">Numéro de compte destinataire :</label>
-      <input
-          type="text"
-          id="destinataire"
-          v-model="destinataire"
-          placeholder="Entrez le numéro de compte"
-      />
-    </div>
+        <!-- Case à cocher pour ajouter un destinataire (activer le mode virement) -->
+        <v-checkbox v-model="hasDestinataire" label="Ajouter un destinataire (Virement)" />
 
-    <!-- Submit Button -->
-    <div class="form-group">
-      <button @click="handleSubmit">Valider</button>
-    </div>
+        <!-- Champ pour le numéro de compte du destinataire -->
+        <v-text-field
+            v-if="hasDestinataire"
+            label="Numéro de compte destinataire"
+            v-model.trim="destinataire"
+            outlined
+            dense
+        />
 
-    <!-- Success Message -->
-    <p v-if="Messagesucces" class="success-message">
-      {{ Messagesucces }}
-    </p>
-  </div>
+        <v-divider class="my-3"></v-divider>
+
+        <!-- Bouton Valider -->
+        <v-btn
+            v-if="hasDestinataire"
+            color="red"
+            :disabled="isProcessing || !montant || !destinataire"
+            @click="handleSubmit"
+            block
+        >
+          <v-icon left>mdi-check</v-icon> Valider le Virement
+          <v-progress-circular v-if="isProcessing" indeterminate size="20" class="ml-2" />
+        </v-btn>
+
+        <!-- Message d'erreur -->
+        <v-alert v-if="errorMessage" type="error" dense class="mt-3">
+          {{ errorMessage }}
+        </v-alert>
+
+        <!-- Notification de succès -->
+        <v-snackbar v-model="messageSucces" timeout="5000" color="green">
+          {{ messageSucces }}
+          <template v-slot:action="{ attrs }">
+            <v-btn color="white" text v-bind="attrs" @click="messageSucces = false">
+              OK
+            </v-btn>
+          </template>
+        </v-snackbar>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
-
 <script>
-import {mapActions} from "vuex";
+import { mapActions, mapState } from "vuex";
+import BankWithdrawForm from "@/components/Bank/BankWithdrawForm.vue";
 
 export default {
   name: "BankOperation",
+  components: { BankWithdrawForm },
   data() {
     return {
       montant: null,
       hasDestinataire: false,
       destinataire: "",
-      Messagesucces: "",
+      messageSucces: "",
+      errorMessage: "",
+      isProcessing: false,
     };
   },
+  computed: {
+    ...mapState("bank", ["currentAccount"]),
+  },
   methods: {
-    ...mapActions("bank", ["createWithdraw", "createPayment"]),
+    ...mapActions("bank", ["createPayment"]),
     async handleSubmit() {
-      // Validation for montant
+      this.errorMessage = "";
+      this.isProcessing = true;
+
       if (!this.montant || this.montant <= 0) {
-        alert("Veuillez entrer un montant valide.");
+        this.errorMessage = "⚠️ Veuillez entrer un montant valide.";
+        this.isProcessing = false;
         return;
       }
 
-      // If destinataire is checked, validate destinataire account
-      if (this.hasDestinataire && !this.destinataire) {
-        alert("Veuillez entrer un numéro de compte destinataire.");
+      if (!this.destinataire) {
+        this.errorMessage = "⚠️ Veuillez entrer un numéro de compte destinataire.";
+        this.isProcessing = false;
         return;
       }
 
       try {
-        let response;
-
-        // Perform payment or withdrawal
-        if (this.hasDestinataire) {
-          response = await this.createPayment({
-            idAccount: this.$store.state.bank.currentAccount._id,
-            destNumber: this.destinataire,
-            montant: this.montant,
-          });
-        } else {
-          response = await this.createWithdraw({
-            idAccount: this.$store.state.bank.currentAccount._id,
-            montant: this.montant,
-          });
-        }
+        const response = await this.createPayment({
+          idAccount: this.currentAccount._id,
+          destNumber: this.destinataire,
+          amount: this.montant,
+        });
 
         if (response.error === 0) {
-          // Display success message with UUID
-          this.Messagesucces = `L'opération est validée avec le n° : ${response.data.uuid}. Vous pouvez la retrouver dans l'historique.`;
-          setTimeout(() => {
-            this.Messagesucces = "";
-          }, 5000); // Clear success message after 5 seconds
+          this.messageSucces = `✅ Virement validé : ${response.data.uuid}`;
+          this.resetForm();
         } else {
-          // Display error message
-          alert(response.data || "Une erreur est survenue.");
+          this.errorMessage = response.data || "Une erreur est survenue.";
         }
       } catch (error) {
-        alert("Une erreur inattendue est survenue.");
+        this.errorMessage = "❌ Une erreur inattendue est survenue.";
         console.error(error);
       }
+
+      this.isProcessing = false;
+    },
+
+    resetForm() {
+      this.montant = null;
+      this.destinataire = "";
+      this.hasDestinataire = false;
     },
   },
 };
 </script>
-
-<style>
-.form-group {
-  margin-bottom: 1rem;
-}
-</style>

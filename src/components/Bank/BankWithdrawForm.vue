@@ -1,78 +1,102 @@
 <template>
-  <v-card class="pa-5">
-    <h2>💸 Débit / Virement</h2>
-    <p><strong>Compte :</strong> {{ account.number }}</p>
-    <p><strong>Solde actuel :</strong> {{ account.amount }} €</p>
+  <v-card class="pa-5" elevation="2">
+    <v-card-title class="justify-center">💸 Effectuer un retrait</v-card-title>
 
-    <v-text-field v-model="amount" label="Montant" outlined type="number"></v-text-field>
+    <v-divider class="my-3"></v-divider>
 
-    <v-checkbox v-model="isTransfer" label="Effectuer un virement"></v-checkbox>
-    <v-text-field v-if="isTransfer" v-model="destination" label="Numéro de compte destinataire" outlined></v-text-field>
+    <v-card-text>
+      <p><strong>Compte :</strong> {{ account.number }}</p>
+      <p><strong>Solde actuel :</strong>
+        <v-chip :color="account.amount < 0 ? 'red' : 'green'" class="text-white">
+          {{ account.amount }} €
+        </v-chip>
+      </p>
 
-    <v-btn color="green" @click="submitTransaction">Valider</v-btn>
+      <!-- Champ pour le montant -->
+      <v-text-field
+          v-model.number="amount"
+          label="Montant (€)"
+          type="number"
+          min="0.01"
+          outlined
+          dense
+      />
 
-    <!-- ✅ Popup affiché après le virement -->
-    <PaymentSuccessPopup/>
+      <!-- Bouton Valider -->
+      <v-btn
+          color="red"
+          :disabled="isProcessing || !amount"
+          @click="submitWithdraw"
+          block
+      >
+        <v-icon left>mdi-check</v-icon> Valider
+        <v-progress-circular v-if="isProcessing" indeterminate size="20" class="ml-2" />
+      </v-btn>
+
+      <!-- Message d'erreur -->
+      <v-alert v-if="errorMessage" type="error" dense class="mt-3">
+        {{ errorMessage }}
+      </v-alert>
+
+      <!-- Notification de succès -->
+      <v-snackbar v-model="messageSucces" timeout="5000" color="green">
+        {{ messageSucces }}
+        <template v-slot:action="{ attrs }">
+          <v-btn color="white" text v-bind="attrs" @click="messageSucces = false">
+            OK
+          </v-btn>
+        </template>
+      </v-snackbar>
+    </v-card-text>
   </v-card>
 </template>
 
 <script>
-import {mapActions} from "vuex";
-import PaymentSuccessPopup from "./PaymentSuccessPopup.vue";
+import { mapActions } from "vuex";
 
 export default {
   name: "BankWithdrawForm",
-  components: {PaymentSuccessPopup},
   props: {
-    account: {type: Object, required: true}, // ✅ Assure que la prop `account` est bien fournie
+    account: { type: Object, required: true },
   },
   data() {
     return {
-      amount: "",
-      isTransfer: false,
-      destination: "",
+      amount: null,
+      messageSucces: "",
+      errorMessage: "",
+      isProcessing: false,
     };
   },
   methods: {
-    ...mapActions("bank", ["createPaiement", "createWithdraw"]),
-    async submitTransaction() {
-      console.log("🔄 Transaction soumise :", {
-        montant: this.amount,
-        destinataire: this.isTransfer ? this.destination : "Retrait",
-      });
+    ...mapActions("bank", ["createWithdraw"]),
+    async submitWithdraw() {
+      this.errorMessage = "";
+      this.isProcessing = true;
 
       if (!this.amount || this.amount <= 0) {
-        alert("Veuillez entrer un montant valide.");
+        this.errorMessage = "⚠️ Veuillez entrer un montant valide.";
+        this.isProcessing = false;
         return;
       }
+
       try {
-        let response;
-        if (this.isTransfer) {
-          // Virement vers un autre compte
-          if (!this.destination) {
-            alert("Veuillez entrer un numéro de compte destinataire.");
-            return;
-          }
-          response = await this.createPaiement({
-            id_account: this.account._id,
-            amount: this.amount,
-            destination: this.destination,
-          });
-        } else {
-          // Retrait simple
-          response = await this.createWithdraw({
-            id_account: this.account._id,
-            amount: this.amount,
-          });
-        }
+        const response = await this.createWithdraw({
+          idAccount: this.account._id,
+          amount: this.amount,
+        });
+
         if (response.error === 0) {
-          console.log("✅ Transaction réussie, UUID :", response.data.uuid);
+          this.messageSucces = `✅ Retrait validé : ${response.data.uuid}`;
+          this.amount = null;
         } else {
-          alert("Erreur lors de la transaction : " + response.data);
+          this.errorMessage = response.data || "Une erreur est survenue.";
         }
       } catch (error) {
-        console.error("❌ Erreur lors de la transaction :", error);
+        this.errorMessage = "❌ Une erreur inattendue est survenue.";
+        console.error(error);
       }
+
+      this.isProcessing = false;
     },
   },
 };

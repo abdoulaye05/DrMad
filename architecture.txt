@@ -9,9 +9,9 @@ src/
 │   │   ├── BankPayementForm.vue
 │   │   ├── BankTransactionList.vue
 │   │   ├── BankWithdrawForm.vue
-│   ├── BankView.vue
 │   ├── BasketList.vue
 │   ├── CheckedList.vue
+│   ├── DataTable.vue
 │   ├── ItemsList.vue
 │   ├── NavBar.vue
 │   ├── VerticalMenu.vue
@@ -41,13 +41,13 @@ src/
 │   ├── BankOperation.vue
 │   ├── BankView.vue
 │   ├── HomePage.vue
-│   ├── ShopBuy.vue
+│   ├── ShopBuyView.vue
 │   ├── ShopHome.vue
-│   ├── ShopLogin.vue
-│   ├── ShopOrders.vue
+│   ├── ShopLoginView.vue
+│   ├── ShopOrdersView.vue
 │   ├── ShopPay.vue
 │   ├── ShopView.vue
-│   ├── ShopWVirus.vue
+│   ├── ShopVirus.vue
 │   ├── VirusesView.vue
 ├── App.vue
 └── main.js

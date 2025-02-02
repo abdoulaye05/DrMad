@@ -2,6 +2,8 @@ import {bankaccounts, items, shopusers, transactions} from "./data";
 import {v4 as uuidv4} from "uuid";
 import bcrypt from "bcryptjs";
 
+// - - - - - SHOP - - - - - -
+
 // Gestion de la connexion des utilisateurs
 function shopLogin(data) {
     console.log("[Controller] Tentative de connexion avec :", data);
@@ -53,12 +55,12 @@ function shopLogin(data) {
 
 // Retourne les articles disponibles avec leurs promotions
 function getItems() {
-  const itemsWithPromotions = items.map((item) => ({
-    ...item,
-    promotion: Array.isArray(item.promotion) ? item.promotion : [],
-  }));
+    const itemsWithPromotions = items.map((item) => ({
+        ...item,
+        promotion: Array.isArray(item.promotion) ? item.promotion : [],
+    }));
 
-  return { error: 0, status: 200, data: itemsWithPromotions };
+    return {error: 0, status: 200, data: itemsWithPromotions};
 }
 
 // Retourne le panier d'un utilisateur
@@ -182,9 +184,9 @@ function payOrder({orderUuid, transactionAmount}) {
         return {error: 1, status: 400, data: "Montant payé incorrect."};
     }
 
-  order.status = "finalized";
-  order.transactionDate = new Date();
-  return { error: 0, status: 200, data: order };
+    order.status = "finalized";
+    order.transactionDate = new Date();
+    return {error: 0, status: 200, data: order};
 }
 
 // Annule une commande
@@ -219,139 +221,144 @@ function getOrders(userId) {
 
 // Retourne une commande spécifique par UUID
 function getOrder(uuid) {
-  const user = shopusers.find((u) => u.orders.some((order) => order.uuid === uuid));
-  if (!user) {
-    return { error: 1, status: 404, data: "Utilisateur introuvable." };
-  }
-  const order = user.orders.find((o) => o.uuid === uuid);
-  if (!order) {
-    return { error: 1, status: 404, data: "Commande introuvable." };
-  }
-  return { error: 0, status: 200, data: order };
+    const user = shopusers.find((u) => u.orders.some((order) => order.uuid === uuid));
+    if (!user) {
+        return {error: 1, status: 404, data: "Utilisateur introuvable."};
+    }
+    const order = user.orders.find((o) => o.uuid === uuid);
+    if (!order) {
+        return {error: 1, status: 404, data: "Commande introuvable."};
+    }
+    return {error: 0, status: 200, data: order};
 }
 
-// Retourne le montant d'un compte bancaire
+
+// - - - - - BANK - - - - - -
 function getAccountAmount(number) {
-    if (!number) return {error: 1, status: 404, data: "empty number"};
-
-    console.log("🔍 [Controller] - Requête pour le compte :", number);
-
-    let account = bankaccounts.find((e) => e.number === number);
-    if (!account) {
-        console.error("❌ [Controller] - Compte non trouvé !");
-        return {error: 1, status: 404, data: "compte inconnu"};
-    }
-
-    // Récupération des transactions liées à ce compte
-    account.transactions = transactions.filter((trans) =>
-        trans.account === account._id
-    );
-
-    console.log("✅ [Controller] - Compte trouvé :", JSON.stringify(account, null, 2));
-    console.log("📝 [Controller] Réponse finale envoyée :", JSON.stringify({error: 0, data: account}, null, 2));
-
-    return {error: 0, data: account};
+    if (!number) return {error: 1, status: 404, data: 'aucun numéro de compte bancaire fourni'}
+    let account = bankaccounts.find(a => a.number === number)
+    if (!account) return {error: 1, status: 404, data: 'numéro de compte bancaire incorrect'}
+    return {error: 0, status: 200, data: account.amount}
 }
 
-// Retourne les transactions d'un compte bancaire
-function getTransactions(number) {
-    console.log("controller.js - getTransactions")
-    if (!number) {
-        return {error: 1, status: 404, data: "Aucun numéro de compte bancaire fourni"};
-    }
-    console.log("🔍 [Controller] - Recherche des transactions pour le compte :", number);
-    let account = bankaccounts.find(a => a.number === number);
-    if (!account) {
-        console.error("❌ [Controller] - Numéro de compte incorrect :", number);
-        return {error: 1, status: 404, data: "Numéro de compte incorrect"};
-    }
-    // ✅ CORRECTION : Filtrer par `_id` et non par `number`
-    let trans = transactions.filter(t => t.account === account._id || t.destination === account._id);
-    console.log("✅ [Controller] - Transactions trouvées :", JSON.stringify(trans, null, 2));
-    return {error: 0, status: 200, data: trans};
+function getAccountTransactions(number) {
+    if (!number) return {error: 1, status: 404, data: 'aucun numéro de compte bancaire fourni'}
+    let account = bankaccounts.find(a => a.number === number)
+    if (!account) return {error: 1, status: 404, data: 'numéro de compte bancaire incorrect'}
+    // récupérer les transactions grâce à l'_id du compte
+    let trans = transactions.filter(t => t.account === account._id)
+    return {error: 0, status: 200, data: trans}
 }
 
-// Crée un retrait
-function createWithdraw(id_account, amount) {
-    console.log("💰 [Controller] Création d'un retrait pour :", id_account, "Montant :", amount);
-    if (!amount || amount <= 0) {
-        return {error: 1, status: 400, data: "Montant invalide"};
+function getTransactions(idAccount = null) {
+    if (idAccount === "" || idAccount === undefined || idAccount === null) return {
+        error: 1,
+        status: 404,
+        data: "Aucun compte bancaire fourni"
+    };
+    const account = transactions.filter((t) => t.account === idAccount || t.destination === idAccount);
+    if (!account.length) return {error: 1, status: 404, data: "Aucune transaction trouvée"};
+    return {error: 0, status: 200, data: account};
+}
+
+function getTransaction(uuid) {
+    const transaction = transactions.find((t) => t.uuid === uuid);
+    if (!transaction) {
+        return null;
     }
-    const account = bankaccounts.find(acc => acc._id === id_account);
-    if (!account) {
-        return {error: 1, status: 404, data: "Compte inexistant"};
-    }
-    if (account.amount < amount) {
-        return {error: 1, status: 400, data: "Solde insuffisant"};
-    }
-    // Génération d'un UUID unique pour la transaction
+    return transaction;
+}
+
+function getAccount(number) {
+    if (number === "" || number === undefined) return {
+        error: 1,
+        status: 404,
+        data: "Aucun numéro de compte bancaire fourni"
+    };
+    const account = bankaccounts.find((account) => account.number === number);
+    if (!account) return {error: 1, status: 404, data: "Numéro de compte invalide"};
+    account.transactions = transactions.filter((t) => t.account === account._id || t.destination === account._id);
+    return {error: 0, status: 200, data: account};
+}
+
+function createWithdraw(idAccount, amount) {
+    const account = bankaccounts.find((a) => a._id === idAccount);
+    if (!account) return {error: 1, status: 404, data: "Compte introuvable"};
+    if (amount <= 0) return {error: 1, status: 400, data: "Montant invalide"};
+    if (account.amount < amount) return {error: 1, status: 400, data: "Fonds insuffisants"};
+
     const transaction = {
         _id: uuidv4(),
-        amount: -amount,
-        account: id_account,
+        amount: -Math.abs(amount),
+        account: idAccount,
         date: {$date: new Date().toISOString()},
         uuid: uuidv4(),
     };
-    console.log("🔄 [Controller] Transaction créée :", transaction);
-    // Ajout de la transaction et mise à jour du solde
-    transactions.push(transaction);
-    account.amount -= amount;
-    return {error: 0, status: 200, data: {uuid: transaction.uuid, amount: account.amount}};
 
+    account.transactions.push(transaction);
+    account.amount -= amount;
+
+    return {error: 0, status: 200, data: {uuid: transaction.uuid, amount: account.amount}};
 }
 
-// Crée un paiement
-function createPaiement(id_account, amount, destination) {
-    console.log("🟢 [Controller] createPaiement appelé avec :", {id_account, amount, destination});
+function createPayment(data) {
+    const sourceAccount = bankaccounts.find((a) => a._id === data.idAccount);
+    const destinationAccount = bankaccounts.find((a) => a.number === data.destNumber);
 
-    const account = bankaccounts.find(e => e._id === id_account);
-    const destination_account = bankaccounts.find(e => e._id === destination);
-
-    if (!account) {
-        console.error("❌ [Controller] Compte source introuvable !");
-        return {error: 1, status: 404, data: 'Compte source invalide'};
+    if (!sourceAccount) {
+        return {error: 1, status: 404, data: "ID de compte source invalide"};
     }
-    if (!destination_account) {
-        console.error("❌ [Controller] Compte destination introuvable !");
-        return {error: 1, status: 404, data: 'Compte de destination invalide'};
+    if (!destinationAccount) {
+        return {error: 1, status: 404, data: "Compte destinataire inexistant"};
     }
-    if (amount <= 0 || account.amount < amount) {
-        console.error("❌ [Controller] Montant invalide ou solde insuffisant !");
-        return {error: 1, status: 400, data: 'Montant invalide ou solde insuffisant'};
+    if (sourceAccount.amount < data.amount) {
+        return {error: 1, status: 400, data: "Fonds insuffisants"};
+    }
+    if (data.amount <= 0) {
+        return {error: 1, status: 400, data: "Montant invalide"};
     }
 
-    // Générer un UUID unique pour la transaction
-    const transaction = {
+    // vérif transaction
+    if (sourceAccount._id === destinationAccount._id) {
+        return {error: 1, status: 400, data: "Impossible de faire un virement sur le même compte"};
+    }
+    if (!sourceAccount.transactions) sourceAccount.transactions = [];
+    if (!destinationAccount.transactions) destinationAccount.transactions = [];
+
+    const withdrawTransaction = {
         _id: uuidv4(),
-        amount: -amount,
-        account: id_account,
-        destination: destination,
-        date: {"$date": new Date().toISOString()},
+        amount: -Math.abs(data.amount),
+        account: data.idAccount,
+        destination: destinationAccount._id,
+        date: {$date: new Date().toISOString()},
         uuid: uuidv4(),
     };
 
-    const transactionDest = {
+    const depositTransaction = {
         _id: uuidv4(),
-        amount: amount, // Positif pour le compte destinataire
-        account: destination,
-        date: {"$date": new Date().toISOString()},
-        uuid: transaction.uuid, // Même UUID pour le lien entre les deux
+        amount: Math.abs(data.amount),
+        account: destinationAccount._id,
+        source: sourceAccount._id,
+        date: {$date: new Date().toISOString()},
+        uuid: uuidv4(),
     };
 
-    console.log("✅ [Controller] Transaction créée :", transaction);
+    sourceAccount.transactions.push(withdrawTransaction);
+    destinationAccount.transactions.push(depositTransaction);
+    transactions.push(withdrawTransaction, depositTransaction);
 
-    // Ajouter aux transactions globales
-    transactions.push(transaction);
-    transactions.push(transactionDest);
+    sourceAccount.amount -= data.amount;
+    destinationAccount.amount += data.amount;
 
-    // Mettre à jour les comptes
-    console.log("💰 [Controller] Avant paiement - Solde initial :", account.amount);
-    account.amount -= amount;
-    destination_account.amount += amount;
-    console.log("💰 [Controller] Après paiement - Nouveau solde :", account.amount);
-
-
-    return {error: 0, status: 200, data: {uuid: transaction.uuid, amount: account.amount}};
+    return {
+        error: 0,
+        status: 200,
+        data: {
+            withdrawTransaction: withdrawTransaction.uuid,
+            depositTransaction: depositTransaction.uuid,
+            newSourceAmount: sourceAccount.amount,
+        },
+    };
 }
 
 export default {
@@ -368,6 +375,9 @@ export default {
     getOrder,
     getAccountAmount,
     getTransactions,
+    getAccount,
+    getAccountTransactions,
     createWithdraw,
-    createPaiement
-}
+    createPayment,
+    getTransaction,
+};

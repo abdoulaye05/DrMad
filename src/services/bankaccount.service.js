@@ -1,32 +1,27 @@
-import LocalSource from "@/datasource/controller";
+import controller from "@/datasource/controller";
 
-async function getAccountAmountFromLocalSource(number) {
-    console.log("📡 [LocalSource] Demande du montant pour :", number);
-    return LocalSource.getAccountAmount(number);
+// getAccountAmount
+async function getAccountFromcontroller(number) {
+    return controller.getAccount(number);
+}
+async function getAccount(number) {
+    let response = null;
+    try {
+        response = await getAccountFromcontroller(number);
+    } catch (err) {
+        return {error: 1, status: 404, data: "Erreur réseau, impossible de récupérer le montant"};
+    }
+    return response;
 }
 
-async function getAccountTransactionsFromLocalSource(number) {
-    console.log("📡 [LocalSource] Demande des transactions pour :", number);
-    return LocalSource.getTransactions(number);
+// getAccountAmount
+async function getAccountAmountFromcontroller(number) {
+    return controller.getAccountAmount(number);
 }
-
-async function createWithdrawFromLocalSource(data) {
-    console.log("📡 [LocalSource] Demande de retrait :", data);
-    return LocalSource.createWithdraw(data);
-}
-
-async function createPaymentFromLocalSource(data) {
-    console.log("📡 [LocalSource] Demande de paiement :", data);
-    return LocalSource.createPaiement(data);
-}
-
 async function getAccountAmount(number) {
     let response = null;
     try {
-        console.log("🔍 [BankAccountService] Envoi de la requête pour amount :", number);
-        response = await getAccountAmountFromLocalSource(number);
-        console.log("✅ [BankAccountService] Réponse reçue pour amount :", response);
-
+        response = await getAccountAmountFromcontroller(number);
         // Vérifier si la réponse est correcte
         if (!response || response.error !== 0) {
             console.error("❌ [BankAccountService] Erreur dans la réponse amount :", response);
@@ -34,76 +29,63 @@ async function getAccountAmount(number) {
         }
         console.log("📡 [BankAccountService] Réponse renvoyée :", JSON.stringify(response, null, 2));
         return {
-            error: 0,
             data: {
                 amount: response.data.amount,
-                transactions: response.data.transactions || []
+                transactions: response.data.transactions ? response.data.transactions : []
             }
         };
     } catch (err) {
-        console.error("🔥 [BankAccountService] Erreur réseau lors de getAccountAmount :", err);
         return {error: 1, status: 404, data: "Erreur réseau, impossible de récupérer le montant"};
     }
 }
 
+// getAccountTransactions
+async function getTransactionsFromcontroller(number) {
+    return controller.getTransactions(number);
+}
 async function getAccountTransactions(number) {
     let response = null;
     try {
-        console.log("🔍 [BankAccountService] Envoi de la requête pour transactions :", number);
-        response = await getAccountTransactionsFromLocalSource(number);
-        if (!response || response.error !== 0 || !Array.isArray(response.data)) {
-            console.error("❌ [BankAccountService] Erreur ou format incorrect :", response);
-            return {error: 1, status: 500, data: "Erreur lors de la récupération des transactions"};
-        }
-        console.log("✅ [BankAccountService] Transactions retournées :", response.data);
-        return response; // ✅ Assure de bien retourner la réponse si elle est valide
+        response = await getTransactionsFromcontroller(number);
     } catch (err) {
-        console.error("🔥 [BankAccountService] Erreur réseau lors de getAccountTransactions :", err);
         return {error: 1, status: 404, data: "Erreur réseau, impossible de récupérer les transactions"};
     }
+    return response;
+
 }
 
-async function createWithdraw(data) {
+// createWithdraw
+async function createWithdrawFromcontroller(idAccount, amount) {
+    return controller.createWithdraw(idAccount, amount);
+}
+async function createWithdraw(idAccount, amount) {
     let response = null;
     try {
-        console.log("🔍 [BankAccountService] Envoi de la requête de retrait :", data);
-        response = await createWithdrawFromLocalSource(data);
-
-        console.log("✅ [BankAccountService] Réponse reçue pour retrait :", response);
-
-        if (!response || response.error !== 0) {
-            console.error("❌ [BankAccountService] Erreur lors du retrait :", response);
-            return { error: 1, status: 500, data: "Erreur lors du retrait" };
-        }
+        response = await createWithdrawFromcontroller({idAccount, amount});
     } catch (err) {
-        console.error("🔥 [BankAccountService] Erreur réseau lors du retrait :", err);
-        response = { error: 1, status: 404, data: "Erreur réseau, impossible d'effectuer le retrait" };
+        return {error: 1, status: 404, data: "Erreur réseau"};
     }
     return response;
 }
 
-async function createPaiement(data) {
-    console.log("🔍 [BankAccountService] createPayment appelé avec :", data);
+// createPayement
+async function createPaymentFromcontroller(idAccount, amount, destination) {
+    return controller.createPayement(idAccount, amount, destination );
+}
+async function createPayement(idAccount, amount, destination) {
+    let response = null;
     try {
-        let response = await createPaymentFromLocalSource(data);
-        console.log("✅ [BankAccountService] Réponse reçue :", response);
-
-        if (!response || response.error !== 0) {
-            console.error("❌ [BankAccountService] Erreur paiement :", response);
-            return { error: 1, status: 500, data: "Erreur lors du paiement" };
-        }
-
-        return response;
+        response = await createPaymentFromcontroller(idAccount, amount, destination);
     } catch (err) {
-        console.error("🔥 [BankAccountService] Erreur réseau lors de createPayment :", err);
         return { error: 1, status: 404, data: "Erreur réseau" };
     }
+    return response;
 }
-
 
 export default {
     getAccountAmount,
     getAccountTransactions,
     createWithdraw,
-    createPaiement
+    createPayement,
+    getAccount
 };
